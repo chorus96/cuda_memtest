@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>3. GPU 메모리 테스트 방법론</title>
+  <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+</head>
+<body>
+
+  <h2>3. GPU 메모리 테스트 방법론(GPU Memory Test Methodology)</h2>
+
+  <p>우리는 GPU 메모리 칩에서 두 가지 종류의 오류를 고려한다.</p>
+  <ol>
+    <li>제조 결함 및 장기간 사용의 결과로 발생하는 <strong>영구적 하드웨어 오류(permanent hardware error)</strong></li>
+    <li>우주 방사선(cosmic radiation)에 의해 유발되는 <strong>일시적 오류, 즉 소프트 오류(transient, or soft error)</strong></li>
+  </ol>
+
+  <h3>3.1 영구적 오류 검출(Detecting permanent errors)</h3>
+
+  <p>영구적 메모리 오류는 다양한 방식으로, 그리고 서로 다른 조건에서 나타날 수 있으며 [1], 따라서 포괄적인 검사
+  모음(test suite)이 필요하다. 우리는 Memtest86 유틸리티(Memtest86 utility) [5]에서 사용하는 검사 방법론을
+  GPU 장치 메모리(GPU device memory)에 맞게 수정하여 채택하였다. 핵심 아이디어는 메모리에 검사 패턴(test
+  pattern)을 기록하고, 이를 다시 읽어들여 기록한 값과 동일한지 검증하는 것이다. 이 아이디어를 구현하기 위해,
+  우리는 앞서 언급한 기본 함수들을 실행하는 GPU 커널(GPU kernel)을 CUDA C로 각각 구현하였으며, 이들은 서로
+  다른 검사 패턴을 사용하여 기본 연산들의 시퀀스로 구성된 검사를 조립하는 데 사용될 수 있다.</p>
+
+  <p>GPU 커널은 스레드 블록(thread block)당 스레드가 1개뿐인, N&#215;1&#215;1 형태의 스레드 블록 그리드(grid)
+  위에서 실행된다. 실행되면 각 커널은 스레드당 1&#160;MB씩, 총 N&#160;MB의 GPU 메모리를 처리한다. 전체
+  M&#160;MB의 GPU 메모리를 검사하기 위해, 우리는 서로 다른 초기 메모리 주소(initial memory address)를 갖는
+  M/N개의 커널을 실행한다. 우리의 검사에서는 M&#160;=&#160;4,037&#160;MB, N&#160;=&#160;128&#160;MB이다.</p>
+
+  <p>GPU 메모리 검사 프로그램은 할당 가능한 모든 GPU 메모리(M&#160;MB)를 할당하는 것으로 시작하여, 개별 검사들의
+  시퀀스를 실행한다. GPU 메모리에 저장된 값을 검증하는 커널 내부에서, 기대값(expected value)이 메모리에 저장된
+  값과 일치하지 않으면 오류 카운터(error counter)가 증가하고, 오류 주소(error address), 현재 값과 기대값, 그
+  밖의 유용한 정보가 저장된다. GPU 커널이 종료되면 오류 정보는 CPU 메모리로 전송되어 오류 파일(error file)에
+  기록된다.</p>
+
+  <p>이 10가지 메모리 검사는 Memtest86 유틸리티에서 사용하는 것들과 유사하며, GPU 실행에 맞게 조정되었다.
+  <strong>표 1(Table I)</strong>은 이 검사들에 대한 정보를 제공한다. <strong>그림 1(Figure 1)</strong>은
+  8비트 패턴을 사용하는 이동 반전(moving inversion with 8-bit pattern) 검사(표 1의 3번 검사)의 예를 보여주며,
+  <strong>그림 2(Figure 2)</strong>는 이 검사에 사용되는 세 개의 커널 중 하나의 GPU 구현을 보여준다.</p>
+
+  <figure class="code">
+    <pre><code>void move_inv_test(char* ptr, unsigned int tot_num_blocks,
+                   unsigned int p1, unsigned p2) {
+    unsigned int i;
+    char* end_ptr = ptr + tot_num_blocks * BLOCKSIZE;
+
+    for (i = 0; i &lt; tot_num_blocks; i += GRIDSIZE) {
+        dim3 grid; grid.x = GRIDSIZE;
+        _move_inv_write&lt;&lt;&lt;grid, 1&gt;&gt;&gt;(ptr + i*BLOCKSIZE, end_ptr, p1);
+    }
+
+    for (i = 0; i &lt; tot_num_blocks; i += GRIDSIZE) {
+        dim3 grid; grid.x = GRIDSIZE;
+        _move_inv_readwrite&lt;&lt;&lt;grid, 1&gt;&gt;&gt;(ptr + i*BLOCKSIZE, end_ptr,
+            p1, p2, err_count, err_addr, err_expect, err_current);
+        error_checking("move_inv_readwrite", i);
+    }
+
+    for (i = 0; i &lt; tot_num_blocks; i += GRIDSIZE) {
+        dim3 grid; grid.x = GRIDSIZE;
+        _move_inv_read&lt;&lt;&lt;grid, 1&gt;&gt;&gt;(ptr + i*BLOCKSIZE, end_ptr, p2,
+            err_count, err_addr, err_expect, err_current);
+        error_checking("move_inv_read", i);
+    }
+}</code></pre>
+    <figcaption>그림 1(Figure 1). 8비트 패턴 이동 반전 검사의 호스트 측(host side) 코드.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="../images/figure1.png" alt="그림 1 원본 이미지 - 8비트 패턴 이동 반전 검사의 호스트 측 코드"/>
+    <figcaption>그림 1(Figure 1) — 원문 이미지(original figure).</figcaption>
+  </figure>
+
+  <figure class="code">
+    <pre><code>__global__ void _move_inv_readwrite(char* _ptr, char* end_ptr,
+        unsigned int p1, unsigned int p2, unsigned int* err,
+        unsigned long* err_addr, unsigned long* err_expect,
+        unsigned long* err_current) {
+    unsigned int i;
+    unsigned int* ptr = (unsigned int*) (_ptr + blockIdx.x*BLOCKSIZE);
+    if (ptr &gt;= (unsigned int*) end_ptr) return;
+
+    for (i = 0; i &lt; BLOCKSIZE/sizeof(unsigned int); i++) {
+        if (ptr[i] != p1) { RECORD_ERR(err, i, p1, ptr[i]); }
+        ptr[i] = p2;
+    }
+    return;
+}</code></pre>
+    <figcaption>그림 2(Figure 2). 이동 반전 검사에 사용되는 읽기-검사-쓰기(read-test-write) GPU 커널.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="../images/figure2.png" alt="그림 2 원본 이미지 - 읽기-검사-쓰기 GPU 커널"/>
+    <figcaption>그림 2(Figure 2) — 원문 이미지(original figure).</figcaption>
+  </figure>
+
+  <h3>3.2 소프트 오류 검출(Detecting soft errors)</h3>
+
+  <p>단일 방사선 이벤트는 메모리에 저장된 데이터 비트를 새로운 데이터가 기록될 때까지 손상시킬 수 있으며, 이는
+  소프트 오류(soft error)로 나타난다. 이러한 단일 방사선 이벤트의 주된 원인은 우주선(cosmic ray) [3]이다.
+  소프트 오류가 발생하는 비율은 실패까지의 시간 단위(FIT, Failures In Time)로 측정된다. 1&#160;FIT은 소자
+  동작 시간 10억 시간당 소프트 오류 1건에 해당한다. 이 비율은 때때로 Mbit당 FIT(FIT per Mbit)로도 보고된다.</p>
+
+  <p>소프트 메모리 오류는 대부분 메모리 접근(memory access) 중에 발생하므로, 오류 발생률은 메모리 사용 강도에
+  비례하여 증가한다 [4]. 따라서 앞 절에서 설명한 일부 검사들도 충분히 오래 실행하면 소프트 오류를 검출하는 데
+  사용할 수 있다. 특히, 이동된 패턴을 사용하는 이동 반전(moving inversion with shifted pattern) 검사(6번
+  검사)는 오랜 기간 동안 메모리에 지속적으로 기록하고 읽어들이므로 좋은 후보이다. 그러나 하드웨어 오류 검출을
+  위해 설계된 검사들은 메모리 시스템에 충분한 부하를 주지 못하므로, 많은 소프트 오류를 잡아낼 가능성을
+  극대화하지 못한다. 따라서 우리는 메모리에 동시에 접근하는 다수의 스레드를 실행하는 GPU 커널(표 1의 10번
+  검사)을 구현하였다. 이 커널은 GPU 메모리에 이전에 저장해 둔 검사 패턴을 읽어 기대값과 비교한 뒤, 그 보수(비트
+  반전 값, complement)를 메모리에 다시 기록한다. 오류가 발견되면 해당 메모리를 한 번 더 읽어 두 개의 읽기 값을
+  보고한다. 검사 패턴은 난수(random number)이다. 이 커널은 무한 루프(infinite loop)로 실행되며, 새로운 검사
+  패턴으로 넘어가기 전에 동일한 검사 패턴을 1,000회 사용한다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <caption>표 1(Table I). 구현된 GPU 메모리 검사(Implemented GPU Memory Tests)</caption>
+      <thead>
+        <tr>
+          <th scope="col">검사(Test)</th>
+          <th scope="col">검사 패턴(Test pattern)</th>
+          <th scope="col">목적(Purpose)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0: 워킹 원(walking ones)</td>
+          <td>워킹 원(walking ones)</td>
+          <td>주소 버스 검사(address bus test)</td>
+        </tr>
+        <tr>
+          <td>1: 자기 주소(own address)</td>
+          <td>자신의 물리 주소(own physical address)</td>
+          <td>주소 버스 검사(address bus test)</td>
+        </tr>
+        <tr>
+          <td>2: 이동 반전(moving inversion)</td>
+          <td>이동 반전, 1과 0(moving inversions, ones and zeros)</td>
+          <td>스턱-앳 고장 오류(stuck-at faults errors)</td>
+        </tr>
+        <tr>
+          <td>3: 8비트 패턴 이동 반전(moving inversion with 8-bit pattern)</td>
+          <td>이동 반전, 8비트 패턴(moving inversions, 8-bit pattern)</td>
+          <td>스턱-앳 고장 오류(stuck-at faults errors)</td>
+        </tr>
+        <tr>
+          <td>4: 난수 패턴 이동 반전(moving inversion with random pattern)</td>
+          <td>이동 반전, 난수 패턴(moving inversions, random pattern)</td>
+          <td>데이터 민감 오류(data sensitive errors)</td>
+        </tr>
+        <tr>
+          <td>5: 블록 이동 검사(block move test)</td>
+          <td>블록 이동, 64회 이동(block move, 64 moves)</td>
+          <td>데이터 민감 오류(data sensitive errors)</td>
+        </tr>
+        <tr>
+          <td>6: 시프트 패턴 이동 반전(moving inversion with shifted pattern)</td>
+          <td>이동 반전, 32비트 패턴(moving inversions, 32-bit pat)</td>
+          <td>데이터 민감 오류(data sensitive errors)</td>
+        </tr>
+        <tr>
+          <td>7: 난수 시퀀스(random numbers sequence)</td>
+          <td>난수 값과 그 보수(random values and their compliments)</td>
+          <td>데이터 민감 오류(data sensitive errors)</td>
+        </tr>
+        <tr>
+          <td>8: 모듈로 20 난수 패턴(modulo 20 random pattern)</td>
+          <td>모듈로 20, 1과 0(modulo 20, ones and zeros)</td>
+          <td>데이터 민감 오류(data sensitive errors)</td>
+        </tr>
+        <tr>
+          <td>9: 비트 페이드 검사(bit fade test)</td>
+          <td>0xFFFFFFFF</td>
+          <td>데이터 보존 검사(data retention test)</td>
+        </tr>
+        <tr>
+          <td>10: 소프트 오류 검사(soft errors test)</td>
+          <td>난수 값(random values)</td>
+          <td>소프트 오류(soft errors)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
