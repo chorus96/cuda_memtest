@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id" xml:lang="ko">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="book-id">urn:uuid:04ac86ec-902b-47db-8830-d4be5b370440</dc:identifier>
+    <dc:title>GPU 메모리의 하드 오류 및 소프트 오류 검사에 관하여</dc:title>
+    <dc:language>ko</dc:language>
+    <dc:creator id="cre1">Guochun Shi</dc:creator>
+    <dc:creator id="cre2">Jeremy Enos</dc:creator>
+    <dc:creator id="cre3">Michael Showerman</dc:creator>
+    <dc:creator id="cre4">Volodymyr Kindratenko</dc:creator>
+    <dc:publisher>National Center for Supercomputing Applications (한국어 번역판)</dc:publisher>
+    <dc:description>원제 On Testing GPU Memory for Hard and Soft Errors 의 한국어 번역판. 원문의 그림·표·참고문헌을 모두 포함.</dc:description>
+    <dc:source>SAAHPC 2009 (saahpc_09.pdf)</dc:source>
+    <dc:date>2009-07-31</dc:date>
+    <meta property="dcterms:modified">2026-08-20T00:00:00Z</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="css" href="css/style.css" media-type="text/css"/>
+    <item id="title" href="text/title.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch1" href="text/ch1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch2" href="text/ch2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch3" href="text/ch3.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch4" href="text/ch4.xhtml" media-type="application/xhtml+xml"/>
+    <item id="fig1" href="images/figure1.png" media-type="image/png"/>
+    <item id="fig2" href="images/figure2.png" media-type="image/png"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="title"/>
+    <itemref idref="ch1"/>
+    <itemref idref="ch2"/>
+    <itemref idref="ch3"/>
+    <itemref idref="ch4"/>
+  </spine>
+</package>

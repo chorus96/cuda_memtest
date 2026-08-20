@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>5. 결론 · 감사의 글 · 참고문헌</title>
+  <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+</head>
+<body>
+
+  <h2>5. 결론 및 향후 연구(Conclusions and Future Work)</h2>
+
+  <p>우리는 GPU 메모리의 영구적 하드웨어 오류를 검사하기 위한 포괄적인 검사 모음을 구현하였으며, 일시적 소프트
+  오류의 발생률을 모니터링하기 위한 방법론과 소프트웨어 도구를 개선하고 있다. NCSA의 두 대규모 NVIDIA GPU
+  설치 환경에서 우리는 아직 소프트 오류를 한 건도 관찰하지 못했으나, 검사한 GPU의 1.8%가 영구적 메모리 오류를
+  가진 것으로 드러났다. 우리의 검사는, 제조 검사가 제대로 수행되었더라면 고객에게 출하되지 말았어야 할 시스템에서
+  이러한 결함을 발견하였다. NVIDIA는 이후 이 문제를 바로잡았다. 그러나 메모리 문제가 있는 것으로 확인된 시스템이
+  1.8%라 하더라도, 이 메모리 고장률은 비(非)GPU 클러스터에서 보고된 수치보다 낮다. 예를 들어, Li 등[6]은
+  Ask.com 서버 212대 중 9대(즉 4.5%)에서 하드웨어 메모리 결함을 발견하였다.</p>
+
+  <div class="callout">
+    <span class="callout-title">중요!(Important!)</span>
+    <p>두 대규모 NVIDIA GPU 설치 환경에서 <strong>소프트 오류(soft error)는 한 건도 관찰되지 않았으며</strong>,
+    검사한 GPU의 <strong>1.8%</strong>에서 영구적 메모리 오류(permanent memory error)가 발견되었다. 이 고장률은
+    비(非)GPU 클러스터에서 보고된 4.5%(Ask.com 서버 사례)보다 낮은 수치이다.</p>
+  </div>
+
+  <div class="note">
+    <span class="note-title">참고(Note) — 코드 내려받기</span>
+    <p>GPU 메모리 검사 코드는 다음 주소에서 내려받을 수 있다:
+    <br/><code>http://sourceforge.net/projects/cudagpumemtest/</code></p>
+  </div>
+
+  <h2>감사의 글(Acknowledgment)</h2>
+
+  <p>이 연구는 첨단 컴퓨팅 응용·기술 연구소(Institute for Advanced Computing Applications and Technologies)의
+  일부 후원을 받았다. 이 연구에 사용된 일부 GPU는 NVIDIA의 아낌없는 하드웨어 기증 덕분에 사용할 수 있었다.
+  Lincoln 클러스터에서 검사를 수행해 준 NCSA의 Jim Long과, 이 글을 준비하는 데 도움을 준 Trish Barker에게
+  특별한 감사를 전한다.</p>
+
+  <h2>참고문헌(References)</h2>
+
+  <ol class="references">
+    <li>R. Dean Adams, <em>High Performace Memory Testing: Design Principles, Fault Modeling and Self-Test</em>,
+    Kluwer: Boston, 2003.</li>
+    <li>Tezzaron Semiconductor, <em>Soft errors in electronic memory</em>. White paper, 2004.
+    http://www.tezzaron.com/about/papers/papers.html.</li>
+    <li>R. Baumann, &#8220;Soft errors in advanced computer systems,&#8221; <em>IEEE Design &amp; Test of Computers</em>,
+    vol.&#160;22, no.&#160;3, pp.&#160;258&#8211;266, 2005.</li>
+    <li>A. Johnston, &#8220;Scaling and Technology Issues for Soft Error Rates,&#8221; In <em>Proc. Fourth Ann.
+    Research Conference on Reliability</em>, 2000.</li>
+    <li>Memtest86 Memory Diagnostic Utility, http://www.memtest86.com</li>
+    <li>X. Li, K. Shen, M. Huang, &#8220;A Memory Soft Error Measurement on Production Systems,&#8221; In
+    <em>Proc. USENIX Annual Technical Conference</em>, 2007.</li>
+    <li>MemtestG80: A Memory and Logic Tester for NVIDIA CUDA-enabled GPUs, https://simtk.org/home/memtest/</li>
+    <li>M. Showerman, J. Enos, A. Pant, V. Kindratenko, C. Steffen, R. Pennington, W. Hwu, &#8220;QP: A Heterogeneous
+    Multi-Accelerator Cluster,&#8221; In <em>Proc. 10th LCI International Conference on High-Performance Clustered
+    Computing</em>, 2009.</li>
+  </ol>
+
+  <hr class="sep"/>
+  <p class="translator-note">본 전자책은 학술 논문 &#8220;On Testing GPU Memory for Hard and Soft Errors&#8221;
+  (Guochun Shi 외, NCSA, 일리노이 대학교 어배너-섐페인)를 한국어로 번역·편집한 것입니다. 원문의 모든 그림·표·수식·참고문헌을
+  포함하였으며, 전문 용어에는 원어(영어)를 병기하였습니다.</p>
+
+</body>
+</html>

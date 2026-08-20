@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>초록 · 1. 서론 · 2. GPU 메모리 시스템</title>
+  <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+</head>
+<body>
+
+  <div class="abstract">
+    <p><span class="label">초록(Abstract)</span> — NVIDIA GPU(그래픽 처리 장치, Graphics Processing Unit)는
+    계산 부하가 큰 코드의 실행을 가속하는 수단으로 과학 계산(scientific computation) 분야에서 점점 더 널리
+    사용되고 있다. GPU에 사용되는 그래픽 메모리(graphics memory)는 우주 방사선(cosmic radiation)에 의해
+    발생할 수 있는 소프트 오류(soft error)로부터 보호되지 않으며, 따라서 과학 계산 커뮤니티에 우려의 대상이
+    되어 왔다. 이 짧은 논문에서 우리는 제조 결함(manufacturing defect) 및 장기간 사용으로 인한 영구적
+    메모리 오류(permanent memory error)와, 단일 방사선 이벤트(single radiation event)로 인한 소프트 오류
+    양쪽 모두에 대해 GPU 메모리를 검사하려는 시도를 보고한다. 우리는 새로운 GPU 메모리 검사 방법론(memory
+    test methodology)을 제시하고, 두 개의 대규모 GPU 클러스터(GPU cluster)에서 측정한 오류 결과를 제시한다.</p>
+    <p class="keywords"><span class="label">키워드(Keywords)</span> — GPU, 메모리 검사(memory test)</p>
+  </div>
+
+  <h2>1. 서론(Introduction)</h2>
+
+  <p>현대의 고성능 컴퓨터(HPC, High-Performance Computer)는 일반적으로 정상 동작 중에 데이터를 손상시키지
+  않는다고 보장되는, 높은 신뢰성을 가진 부품들로 구성된다. 생산 배치(production deployment) 이전에 HPC
+  시스템은 결함 부품을 제거하기 위해 제조사에 의해 엄격하게 검사된다. 또한 다양한 오류 검출·정정 방식(error
+  detection and correction schema)이 하드웨어에 직접 구현되어, 장비의 정상 동작 중 데이터 무결성(data
+  integrity)을 보장한다. HPC 시스템 사용자는 계산 결과가 정확하며 하드웨어 결함으로 인한 오류의 영향을 받지
+  않을 것이라고 기대한다. 따라서 HPC 커뮤니티는 데이터 무결성을 보장하지 못하는 어떠한 새로운 기술도 받아들이기를
+  매우 꺼린다.</p>
+
+  <p>당연하게도, 과학 계산에서 그래픽 처리 장치(GPU)를 사용하는 것에 대한 반론 중 하나는, GPU 카드에 사용되는
+  그래픽 더블 데이터 레이트 3(GDDR3, Graphics Double Data Rate 3) 메모리 칩이 &#8220;소프트 오류(soft
+  error)&#8221;로부터 보호되지 않는다는 사실에 근거한다. NVIDIA의 컴퓨트 통합 장치 아키텍처(CUDA, Compute
+  Unified Device Architecture) GPU가 현대의 멀티코어 CPU에서 달성 가능한 수준을 훨씬 뛰어넘는 성능을
+  제공함에도 불구하고, 과학 계산 커뮤니티는 GPU를 실제 생산 작업(production run)에 사용하는 문제에 대해서는
+  여전히 회의적이고 신중한 태도를 유지하고 있다.</p>
+
+  <p>NCSA(국립 슈퍼컴퓨팅 응용 센터)가 과학 계산 커뮤니티가 사용할 수 있도록 두 개의 대규모 GPU 클러스터를
+  배치한 이후, 우리는 실제로 GPU 메모리가 얼마나 신뢰할 수 있는지를 조사해 보기로 하였다. GPU 메모리 검사에서
+  우리는 제조 결함과 &#8220;소프트 오류&#8221;에 대한 취약성 모두를 고려한다. 이는 아직 진행 중인 연구이며,
+  이 논문에서 우리는 GPU 메모리를 검사하기 위해 사용한 방법론과 500대가 넘는 NVIDIA Tesla GPU를 검사하여
+  얻은 초기 결과를 보고한다.</p>
+
+  <h2>2. NVIDIA GPU 메모리 시스템(NVIDIA GPU Memory System)</h2>
+
+  <p>이 연구는 범용 컴퓨팅(general purpose computing) 용도로 특별히 설계된 NVIDIA Tesla GPU 제품군에
+  기반한다. C1060 컴퓨팅 프로세서(C1060 Computing Processor)와 S1070 1U GPU 컴퓨팅 서버(S1070 1U GPU
+  Computing Server)는 HPC 시스템에서 널리 사용되는, NVIDIA의 T10 GPU 칩(T10 GPU chip) 기반의 최신
+  제품이다. 두 제품 모두 32개의 32M &#215; 32 GDDR3 136핀 볼 그리드 어레이(BGA, Ball Grid Array) 실장형
+  동기식 동적 랜덤 액세스 메모리(SDRAM, Synchronous Dynamic Random Access Memory)를 사용하며, 이는 GPU당
+  4&#160;GB의 메모리에 해당한다. 이 메모리는 800&#160;MHz로 동작하고, 512비트 메모리 인터페이스(memory
+  interface)를 통해 GPU와 연결되어 102&#160;GB/s를 초과하는 메모리 대역폭(memory bandwidth)을 제공한다.</p>
+
+</body>
+</html>
