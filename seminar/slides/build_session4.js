@@ -124,6 +124,48 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 4b — atomicAdd serialization timeline (before/after)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"3","원자연산이 경쟁을 없애는 과정");
+  s.addText("같은 상황(err=5, 두 스레드가 +1)을 일반 증가와 atomicAdd로 비교합니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const colW=(W-2*M-0.5)/2, boxY=2.05, boxH=4.35;
+  const stepRow=(x,y,w,h,tlabel,tcolor,text,tc)=>{
+    s.addShape(p.ShapeType.roundRect,{x,y,w,h,rectRadius:0.04,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText(tlabel,{x:x+0.12,y,w:0.6,h,valign:"middle",align:"center",fontFace:MONO,fontSize:12,bold:true,color:tcolor,margin:0});
+    s.addText(text,{x:x+0.78,y,w:w-0.9,h,valign:"middle",fontFace:KFONT,fontSize:13,color:tc||TEXT,margin:0});
+  };
+
+  // LEFT — plain ++ (race)
+  const lx=M;
+  s.addShape(p.ShapeType.roundRect,{x:lx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:RED,width:1.5}});
+  s.addText("① 일반 ++  (경쟁 조건)",{x:lx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:16,bold:true,color:RED,margin:0});
+  const lrx=lx+0.28, lrw=colW-0.56; let ly=boxY+0.7;
+  stepRow(lrx,ly,lrw,0.55,"t1",TEAL,"스레드 A : err 읽음 → 5"); ly+=0.67;
+  stepRow(lrx,ly,lrw,0.55,"t2",AMBER,"스레드 B : err 읽음 → 5  (끼어듦!)",AMBER); ly+=0.67;
+  stepRow(lrx,ly,lrw,0.55,"t3",TEAL,"스레드 A : 5+1 = 6 저장"); ly+=0.67;
+  stepRow(lrx,ly,lrw,0.55,"t4",AMBER,"스레드 B : 5+1 = 6 저장"); ly+=0.75;
+  s.addShape(p.ShapeType.roundRect,{x:lrx,y:ly,w:lrw,h:0.55,rectRadius:0.05,fill:{color:"2A1618"},line:{color:RED,width:1}});
+  s.addText("결과 err = 6  ·  증가 하나 유실 (틀림)",{x:lrx,y:ly,w:lrw,h:0.55,align:"center",valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:RED,margin:0});
+
+  // RIGHT — atomicAdd (serialized)
+  const rx=M+colW+0.5;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("② atomicAdd  (원자적)",{x:rx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:16,bold:true,color:GREEN,margin:0});
+  const rrx=rx+0.28, rrw=colW-0.56; let ry=boxY+0.7;
+  stepRow(rrx,ry,rrw,0.9,"t1",TEAL,"A : atomicAdd → 5 읽고 6 저장\n     (읽기+쓰기가 한 덩어리)",TEXT); ry+=1.02;
+  stepRow(rrx,ry,rrw,0.9,"t2",GREEN,"B : atomicAdd → 6 읽고 7 저장\n     (A가 끝난 뒤 실행)",TEXT); ry+=1.02;
+  s.addText("원자연산은 중간에 끼어들 수 없습니다 (쪼갤 수 없는 하나의 동작)",{x:rrx,y:ry,w:rrw,h:0.4,fontFace:KFONT,fontSize:11.5,italic:true,color:MUTED,margin:0}); ry+=0.42;
+  s.addShape(p.ShapeType.roundRect,{x:rrx,y:ry,w:rrw,h:0.55,rectRadius:0.05,fill:{color:"16240F"},line:{color:GREEN,width:1}});
+  s.addText("결과 err = 7  ·  정확히 셈 (정확)",{x:rrx,y:ry,w:rrw,h:0.55,align:"center",valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+
+  s.addText("210만 스레드가 동시에 오류를 세도, atomicAdd 덕분에 총 개수가 정확합니다. (RECORD_ERR, tests.cpp:76)",{x:M,y:6.55,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("왼쪽=끼어들기로 유실, 오른쪽=원자연산이 읽기-쓰기를 직렬화해 정확. 슬라이드 3의 문제에 대한 해답 타임라인.");
+})();
+
+// =====================================================================
 // Slide 5 — RECORD_ERR macro dissection (code)
 // =====================================================================
 (()=>{
@@ -171,6 +213,62 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
   ],{fontSize:13});
   s.addText("MAX_ERR_RECORD_COUNT = 10 (tests.cpp:67). 오류가 100만 개여도 배열은 10칸 — 최근 것만 남깁니다.",{x:M,y:5.7,w:W-2*M,h:0.5,fontFace:KFONT,fontSize:14,italic:true,color:MUTED,margin:0});
   s.addNotes("atomicAdd의 반환값이 락 없이 고유 인덱스를 나눠주는 우아한 트릭. 병렬 프로그래밍의 흔한 관용구.");
+})();
+
+// =====================================================================
+// Slide 6b — atomicAdd vs tree reduction diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"5","집계하는 두 방법 · atomicAdd vs 리덕션");
+  s.addText("여러 스레드의 값을 하나로 모으는 방법은 둘입니다. 이 저장소는 왼쪽(atomicAdd)을 씁니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+  const colW=(W-2*M-0.4)/2, boxY=2.05, boxH=3.6;
+  // connector helper: always positive extents, flipH for right-to-left downward segments
+  const connect=(ax,ay,bx,by)=>{
+    s.addShape(p.ShapeType.line,{x:Math.min(ax,bx),y:Math.min(ay,by),w:Math.abs(bx-ax),h:Math.abs(by-ay),flipH:(ax>bx),line:{color:MUTED,width:1.3}});
+  };
+
+  // LEFT: atomicAdd (star)
+  const lx=M;
+  s.addShape(p.ShapeType.roundRect,{x:lx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("① atomicAdd  (이 저장소 방식)",{x:lx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:GREEN,margin:0});
+  const tY=boxY+0.8, cY=boxY+2.35;
+  for(let i=0;i<4;i++){
+    const x=lx+0.55+i*1.25;
+    s.addShape(p.ShapeType.roundRect,{x,y:tY,w:0.95,h:0.5,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText("T"+i,{x,y:tY,w:0.95,h:0.5,align:"center",valign:"middle",fontFace:MONO,fontSize:12,bold:true,color:TEXT,margin:0});
+    connect(x+0.475, tY+0.5, lx+colW/2, cY);
+  }
+  s.addShape(p.ShapeType.roundRect,{x:lx+colW/2-1.0,y:cY,w:2.0,h:0.6,rectRadius:0.05,fill:{color:"16240F"},line:{color:GREEN,width:1.5}});
+  s.addText("err_count",{x:lx+colW/2-1.0,y:cY,w:2.0,h:0.6,align:"center",valign:"middle",fontFace:MONO,fontSize:13,bold:true,color:GREEN,margin:0});
+  s.addText("모두가 하나에 원자적 +1 · 간단하지만 경합(contention)",{x:lx+0.25,y:boxY+boxH-0.5,w:colW-0.5,h:0.4,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+
+  // RIGHT: tree reduction
+  const rx=M+colW+0.4;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("② 트리 리덕션(tree reduction)",{x:rx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  const l0Y=boxY+0.8, l1Y=boxY+1.55, l2Y=boxY+2.3;
+  const l0x=[]; for(let i=0;i<4;i++){ const x=rx+0.55+i*1.25; l0x.push(x+0.475);
+    s.addShape(p.ShapeType.roundRect,{x,y:l0Y,w:0.95,h:0.45,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText("v"+i,{x,y:l0Y,w:0.95,h:0.45,align:"center",valign:"middle",fontFace:MONO,fontSize:11,bold:true,color:TEXT,margin:0}); }
+  const l1cx=[]; for(let j=0;j<2;j++){ const cx=(l0x[j*2]+l0x[j*2+1])/2; l1cx.push(cx);
+    s.addShape(p.ShapeType.roundRect,{x:cx-0.6,y:l1Y,w:1.2,h:0.45,rectRadius:0.05,fill:{color:"12212A"},line:{color:TEAL,width:1}});
+    s.addText(j===0?"v0+v1":"v2+v3",{x:cx-0.6,y:l1Y,w:1.2,h:0.45,align:"center",valign:"middle",fontFace:MONO,fontSize:10.5,bold:true,color:TEAL,margin:0});
+    connect(l0x[j*2], l0Y+0.45, cx, l1Y);
+    connect(l0x[j*2+1], l0Y+0.45, cx, l1Y); }
+  const l2cx=(l1cx[0]+l1cx[1])/2;
+  s.addShape(p.ShapeType.roundRect,{x:l2cx-0.7,y:l2Y,w:1.4,h:0.5,rectRadius:0.05,fill:{color:"12212A"},line:{color:TEAL,width:1.5}});
+  s.addText("합계",{x:l2cx-0.7,y:l2Y,w:1.4,h:0.5,align:"center",valign:"middle",fontFace:KFONT,fontSize:12,bold:true,color:TEAL,margin:0});
+  connect(l1cx[0], l1Y+0.45, l2cx, l2Y);
+  connect(l1cx[1], l1Y+0.45, l2cx, l2Y);
+  s.addText("쌍으로 합쳐 절반씩 · log2(n) 단계 · 경합 없음",{x:rx+0.25,y:boxY+boxH-0.5,w:colW-0.5,h:0.4,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+
+  s.addShape(p.ShapeType.roundRect,{x:M,y:5.85,w:W-2*M,h:1.05,rectRadius:0.08,fill:{color:"1A2418"},line:{type:"none"}});
+  s.addText([
+    ln("언제 무엇을? ",AMBER,{bold:true,breakLine:false}),
+    ln("cuda_memtest는 오류가 보통 드물어 atomicAdd로 충분·간단합니다. 반대로 대량의 값을 합·최대·평균 낼 때는 경합 없는 트리 리덕션이 훨씬 빠릅니다.",TEXT,{breakLine:true}),
+  ],{x:M+0.3,y:6.02,w:W-2*M-0.6,h:0.75,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"middle",lineSpacingMultiple:1.15});
+  s.addNotes("이 저장소가 쓰는 atomicAdd와 대안인 트리 리덕션 대조. 오류가 드물면 atomic, 대량 집계면 reduction.");
 })();
 
 // =====================================================================

@@ -212,6 +212,65 @@ function ln(text, color, opts) {
 })();
 
 // =====================================================================
+// Slide 5b — execution hierarchy block diagram (Grid > Block > Thread)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"4","실행 계층 구조 · Grid → Block → Thread");
+  s.addText("커널을 실행하면 스레드가 3단 계층으로 조직됩니다. 큰 격자(그리드) 안에 블록, 블록 안에 스레드.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // Grid outer box
+  const gx=M, gy=1.95, gw=7.1, gh=4.35;
+  s.addShape(p.ShapeType.roundRect,{x:gx,y:gy,w:gw,h:gh,rectRadius:0.06,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("그리드(Grid)  ·  gridDim.x = 128",{x:gx+0.25,y:gy+0.12,w:gw-0.5,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  // 3x3 blocks
+  const bx0=gx+0.3, by0=gy+0.65, bw=1.95, bh=0.9, bgapx=0.28, bgapy=0.2;
+  let bn=0;
+  for(let r=0;r<3;r++){
+    for(let c=0;c<3;c++){
+      const x=bx0+c*(bw+bgapx), y=by0+r*(bh+bgapy);
+      const hot=(r===0&&c===2);
+      s.addShape(p.ShapeType.roundRect,{x,y,w:bw,h:bh,rectRadius:0.05,fill:{color:CODEBG},line:{color:hot?TEAL:LINE,width:hot?2:1}});
+      s.addText("블록 "+bn,{x,y:y+0.14,w:bw,h:0.32,align:"center",fontFace:KFONT,fontSize:12,bold:true,color:hot?TEAL:TEXT,margin:0});
+      s.addText("blockIdx.x="+bn,{x,y:y+0.46,w:bw,h:0.3,align:"center",fontFace:MONO,fontSize:10,color:MUTED,margin:0});
+      bn++;
+    }
+  }
+  s.addText("… 블록 127까지",{x:bx0,y:by0+3*(bh+bgapy)-0.02,w:gw-0.6,h:0.3,fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  // connector arrow (grid -> block zoom)
+  s.addShape(p.ShapeType.line,{x:gx+gw+0.02,y:gy+1.4,w:0.75,h:0,line:{color:TEAL,width:2.5,endArrowType:"triangle"}});
+  s.addText("확대",{x:gx+gw-0.02,y:gy+0.95,w:0.8,h:0.35,align:"center",fontFace:KFONT,fontSize:11,color:TEAL,margin:0});
+
+  // Block zoom box
+  const zx=gx+gw+0.85, zy=1.95, zw=W-M-(gx+gw+0.85), zh=4.35;
+  s.addShape(p.ShapeType.roundRect,{x:zx,y:zy,w:zw,h:zh,rectRadius:0.06,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("블록(Block)  ·  blockIdx.x",{x:zx+0.25,y:zy+0.12,w:zw-0.5,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:TEAL,margin:0});
+  s.addText("스레드(Thread) · threadIdx.x",{x:zx+0.25,y:zy+0.6,w:zw-0.5,h:0.35,fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  // thread cells 4x2
+  const tx0=zx+0.3, ty0=zy+1.1, tw=0.72, thh=0.72, tgx=0.18, tgy=0.25;
+  let tn=0;
+  for(let r=0;r<2;r++){
+    for(let c=0;c<4;c++){
+      const x=tx0+c*(tw+tgx), y=ty0+r*(thh+tgy);
+      s.addShape(p.ShapeType.roundRect,{x,y,w:tw,h:thh,rectRadius:0.04,fill:{color:CODEBG},line:{color:LINE,width:1}});
+      s.addText("T"+tn,{x,y,w:tw,h:thh,align:"center",valign:"middle",fontFace:MONO,fontSize:13,bold:true,color:TEXT,margin:0});
+      tn++;
+    }
+  }
+  s.addText("… threadIdx.x = 0 ~ (blockDim.x − 1)",{x:tx0,y:ty0+2*(thh+tgy)-0.05,w:zw-0.6,h:0.3,fontFace:KFONT,fontSize:10.5,italic:true,color:MUTED,margin:0});
+
+  // repo note
+  s.addShape(p.ShapeType.roundRect,{x:zx,y:zy+zh-1.0,w:zw,h:0.9,rectRadius:0.05,fill:{color:"1A2418"},line:{type:"none"}});
+  s.addText([
+    ln("이 저장소:",AMBER,{bold:true,breakLine:true}),
+    ln("Test 0~9 → 블록당 스레드 1개",TEXT,{breakLine:true}),
+    ln("Test 10 → 블록당 64개",TEXT,{breakLine:true}),
+  ],{x:zx+0.2,y:zy+zh-0.92,w:zw-0.4,h:0.8,fontFace:KFONT,fontSize:11,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.02});
+  s.addNotes("실행 계층: Grid⊃Block⊃Thread. 각 스레드는 (blockIdx, threadIdx)로 자기 위치를 안다. cuda_memtest의 두 구성도 함께 표시.");
+})();
+
+// =====================================================================
 // Slide 6 — built-in variables (table/cards)
 // =====================================================================
 (() => {
@@ -348,6 +407,51 @@ function ln(text, color, opts) {
     ln("가 전체 메모리를 128 MB씩 훑습니다. 4 GB이면 약 32번 반복됩니다.", TEXT, { breakLine: true }),
   ], { x: M, y: 5.0, w: W - 2*M, h: 1.4, fontFace: KFONT, fontSize: 17, color: TEXT, margin: 0, valign: "top" });
   s.addNotes("커널 launch는 CPU 코드 안의 한 줄이라는 점, dim3로 그리드 차원을 지정한다는 점을 설명하세요.");
+})();
+
+// =====================================================================
+// Slide 9b — kernel launch flow diagram (host -> GPU -> SM -> done)
+// =====================================================================
+(() => {
+  const s = p.addSlide(); bg(s);
+  header(s, "9", "커널 launch 흐름 · 호출에서 완료까지");
+  s.addText("<<<>>> 한 줄을 실행하면, 요청이 GPU로 넘어가 블록이 SM에 분배되고 워프 단위로 실행됩니다.", { x: M, y: 1.5, w: W - 2*M, h: 0.45, fontFace: KFONT, fontSize: 15, color: MUTED, margin: 0 });
+
+  const fw = 7.6, fx = M;
+  const steps = [
+    ["① 호스트(CPU) — 커널 실행 요청", "kernel_move_inv_write<<<128, 1>>>(...)", TEAL, true],
+    ["② GPU 스케줄러 — 블록을 SM에 분배", "128개 블록 → 여러 SM에 나눠 배정", GREEN, false],
+    ["③ 각 SM — 워프(32 스레드) 단위로 실행", "블록 안 스레드들이 실제 연산 수행", GREEN, false],
+    ["④ 커널 완료 — 결과는 전역 메모리에", "호스트는 동기화 후 결과를 사용", GREEN, false],
+  ];
+  let y = 2.1; const bh = 0.9, step = 1.13;
+  steps.forEach((st, i) => {
+    s.addShape(p.ShapeType.roundRect, { x: fx, y, w: fw, h: bh, rectRadius: 0.06, fill: { color: st[3] ? "16242C" : "16241A" }, line: { color: st[2], width: 1.5 } });
+    s.addText(st[0], { x: fx + 0.28, y: y + 0.12, w: fw - 0.5, h: 0.4, fontFace: KFONT, fontSize: 15, bold: true, color: st[2], margin: 0, valign: "middle" });
+    s.addText(st[1], { x: fx + 0.28, y: y + 0.5, w: fw - 0.5, h: 0.32, fontFace: MONO, fontSize: 11.5, color: MUTED, margin: 0, valign: "middle" });
+    if (i < steps.length - 1) {
+      s.addShape(p.ShapeType.line, { x: fx + fw/2, y: y + bh + 0.02, w: 0, h: step - bh - 0.04, line: { color: MUTED, width: 2, endArrowType: "triangle" } });
+    }
+    y += step;
+  });
+  // handoff label between step1 and 2
+  s.addText("실행 구성 + 인자 전달", { x: fx + fw/2 + 0.15, y: 2.1 + bh + 0.0, w: 3.0, h: 0.3, fontFace: KFONT, fontSize: 11, italic: true, color: MUTED, margin: 0 });
+  // host/device zone labels
+  s.addText("호스트", { x: fx + fw + 0.15, y: 2.3, w: 0.9, h: 0.4, fontFace: KFONT, fontSize: 12, bold: true, color: TEAL, margin: 0 });
+  s.addText("디바이스(GPU)", { x: fx + fw + 0.15, y: 3.5, w: 1.7, h: 0.4, fontFace: KFONT, fontSize: 12, bold: true, color: GREEN, margin: 0 });
+
+  // right note panel
+  const nx = 10.55, ny = 2.1, nw = W - M - 10.55, nh = 4.35;
+  s.addShape(p.ShapeType.roundRect, { x: nx, y: ny, w: nw, h: nh, rectRadius: 0.07, fill: { color: CARD }, line: { color: AMBER, width: 1.5 } });
+  s.addText("비동기(async)", { x: nx + 0.25, y: ny + 0.2, w: nw - 0.5, h: 0.45, fontFace: KFONT, fontSize: 17, bold: true, color: AMBER, margin: 0 });
+  s.addText([
+    ln("호스트는 ① 요청 후 곧바로 다음 코드로 갑니다.", TEXT, { breakLine: true, paraSpaceAfter: 10 }),
+    ln("결과가 필요하면 cudaDeviceSynchronize로 GPU 완료를 기다립니다.", TEXT, { breakLine: true, paraSpaceAfter: 10 }),
+    ln("→ 이 비동기 특성은 세션 3(타이밍)·세션 4(오류)에서 자세히.", MUTED, { breakLine: true, italic: true }),
+  ], { x: nx + 0.25, y: ny + 0.8, w: nw - 0.5, h: nh - 1.0, fontFace: KFONT, fontSize: 14, color: TEXT, margin: 0, valign: "top", lineSpacingMultiple: 1.15 });
+
+  s.addText("이 저장소: 스레드가 blockIdx로 자기 1 MB를 맡아 순회 (세션 1의 첫 커널이 바로 이 흐름으로 실행됩니다).", { x: M, y: 6.6, w: W - 2*M, h: 0.4, fontFace: KFONT, fontSize: 13, italic: true, color: MUTED, align: "center", margin: 0 });
+  s.addNotes("launch = CPU 한 줄 → GPU가 블록을 SM에 분배 → 워프 실행 → 완료. 호스트는 비동기로 리턴한다는 점이 다음 세션들의 복선.");
 })();
 
 // =====================================================================

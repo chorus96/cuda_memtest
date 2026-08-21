@@ -4,7 +4,7 @@ p.layout = "LAYOUT_WIDE"; // 13.3 x 7.5
 
 // ---- palette (shared with Sessions 1-2) ----
 const BG="13161C", CARD="1E232C", CODEBG="0E1116", TEXT="E8EDF2", MUTED="9AA6B2";
-const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", LINE="2C3440";
+const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", RED="E0645B", LINE="2C3440";
 const KFONT="Malgun Gothic", MONO="Courier New";
 const W=13.3, H=7.5, M=0.6;
 
@@ -81,6 +81,55 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 3b — SM / warp hardware block diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","실행 하드웨어 · SM과 워프(warp)");
+  s.addText("블록은 SM(스트리밍 멀티프로세서)에 배정되고, 스레드는 32개씩 워프(warp)로 묶여 함께 실행됩니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // GPU box with several SMs (left)
+  const gx=M, gy=2.0, gw=6.7, gh=4.3;
+  s.addShape(p.ShapeType.roundRect,{x:gx,y:gy,w:gw,h:gh,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("GPU · SM 수십 개",{x:gx+0.25,y:gy+0.14,w:gw-0.5,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  const smw=1.85, smh=1.5, sgx=0.24, sgy=0.28, sx0=gx+0.32, sy0=gy+0.7;
+  let n=0;
+  for(let r=0;r<2;r++){
+    for(let c=0;c<3;c++){
+      const x=sx0+c*(smw+sgx), y=sy0+r*(smh+sgy);
+      const hot=(r===0&&c===0);
+      s.addShape(p.ShapeType.roundRect,{x,y,w:smw,h:smh,rectRadius:0.05,fill:{color:CODEBG},line:{color:hot?TEAL:LINE,width:hot?2:1}});
+      s.addText("SM "+n,{x,y:y+0.14,w:smw,h:0.32,align:"center",fontFace:MONO,fontSize:12,bold:true,color:hot?TEAL:TEXT,margin:0});
+      s.addText("워프 스케줄러\n+ 코어 다수",{x,y:y+0.5,w:smw,h:0.85,align:"center",fontFace:KFONT,fontSize:10,color:MUTED,margin:0,lineSpacingMultiple:1.05});
+      n++;
+    }
+  }
+  // arrow to warp zoom
+  s.addShape(p.ShapeType.line,{x:gx+gw+0.03,y:gy+2.0,w:0.7,h:0,line:{color:TEAL,width:2.5,endArrowType:"triangle"}});
+  s.addText("확대",{x:gx+gw-0.05,y:gy+1.55,w:0.8,h:0.35,align:"center",fontFace:KFONT,fontSize:11,color:TEAL,margin:0});
+
+  // warp zoom box (right)
+  const zx=gx+gw+0.8, zy=2.0, zw=W-M-(gx+gw+0.8), zh=4.3;
+  s.addShape(p.ShapeType.roundRect,{x:zx,y:zy,w:zw,h:zh,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("워프(warp) = 32 스레드",{x:zx+0.25,y:zy+0.14,w:zw-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  s.addText("같은 명령을 동시에 실행 (lockstep)",{x:zx+0.25,y:zy+0.56,w:zw-0.5,h:0.32,fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  // 32 small thread squares (8x4)
+  const cols=8, rows=4, cw2=(zw-0.6-(cols-1)*0.1)/cols, ch2=0.42, cgx=0.1, cgy=0.14, cx0=zx+0.3, cy0=zy+1.05;
+  for(let i=0;i<32;i++){
+    const c=i%cols, r=Math.floor(i/cols);
+    const x=cx0+c*(cw2+cgx), y=cy0+r*(ch2+cgy);
+    s.addShape(p.ShapeType.roundRect,{x,y,w:cw2,h:ch2,rectRadius:0.03,fill:{color:CODEBG},line:{color:LINE,width:1}});
+  }
+  s.addText("32개 스레드가 한 덩어리로 움직임",{x:zx+0.3,y:cy0+rows*(ch2+cgy)+0.02,w:zw-0.6,h:0.32,fontFace:KFONT,fontSize:11.5,italic:true,color:MUTED,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:zx+0.3,y:zy+zh-0.95,w:zw-0.6,h:0.78,rectRadius:0.05,fill:{color:"1A2418"},line:{type:"none"}});
+  s.addText([
+    ln("그래서 blockDim은 32의 배수가 유리",AMBER,{bold:true,breakLine:true}),
+    ln("(실습 3에서 블록 크기별 대역폭 측정)",TEXT,{breakLine:true}),
+  ],{x:zx+0.45,y:zy+zh-0.85,w:zw-0.9,h:0.6,fontFace:KFONT,fontSize:11.5,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.05});
+  s.addNotes("SM에 블록 배정 → 워프(32스레드) 단위 실행. blockDim이 32 배수여야 스레드가 낭비 없이 채워짐. 코얼레싱과도 연결.");
+})();
+
+// =====================================================================
 // Slide 4 — thread self-indexing (code)
 // =====================================================================
 (()=>{
@@ -140,6 +189,95 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
     ln("실습 4에서 직접 깨뜨려 측정합니다",TEXT,{breakLine:true,bullet:{code:"2022"}}),
   ],{x:M+colW+0.4,y:5.15,w:colW,h:1.2,fontFace:KFONT,fontSize:15.5,color:TEXT,margin:0,valign:"top"});
   s.addNotes("병합은 CUDA 성능 최적화의 1순위. T0~T3이 어느 칸을 가리키는지 눈으로 비교시키세요.");
+})();
+
+// =====================================================================
+// Slide 5b — warp divergence diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"4","워프 다이버전스(warp divergence)");
+  s.addText("한 워프(32 스레드)가 if/else로 갈리면, GPU는 두 경로를 순차로 실행합니다 (동시에 못 함).",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // code line
+  codePanel(s,M,2.0,W-2*M,0.7,[
+    ln("if (cond) { A; } else { B; }   // 워프 안에서 cond가 스레드마다 다르면?",TEXT),
+  ],{fontSize:13});
+
+  // warp row: 8 threads, mixed true/false
+  const pat=[1,0,1,1,0,1,0,0]; // 1=true(A), 0=false(B)
+  const drawWarp=(y,label,activeVal,note)=>{
+    s.addText(label,{x:M,y:y+0.05,w:3.0,h:0.5,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:TEXT,margin:0});
+    const bx=M+3.1, cw=0.62;
+    for(let i=0;i<8;i++){
+      const on = activeVal===null ? true : (pat[i]===activeVal);
+      const c = pat[i]===1?GREEN:AMBER;
+      s.addShape(p.ShapeType.roundRect,{x:bx+i*(cw+0.12),y,w:cw,h:0.6,rectRadius:0.05,fill:{color:on?c:CODEBG},line:{color:on?c:LINE,width:1}});
+      s.addText(pat[i]===1?"A":"B",{x:bx+i*(cw+0.12),y,w:cw,h:0.6,align:"center",valign:"middle",fontFace:MONO,fontSize:14,bold:true,color:on?BG:MUTED,margin:0});
+    }
+    if(note) s.addText(note,{x:bx+8*(cw+0.12)+0.15,y:y+0.05,w:3.4,h:0.5,valign:"middle",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  };
+  s.addText("워프의 스레드 (A=if경로, B=else경로)",{x:M,y:2.95,w:W-2*M,h:0.3,fontFace:KFONT,fontSize:12,italic:true,color:MUTED,margin:0});
+  drawWarp(3.3,"1단계: if(A) 실행",1,"← A 스레드만 활성, B는 대기");
+  drawWarp(4.15,"2단계: else(B) 실행",0,"← B 스레드만 활성, A는 대기");
+
+  // consequence + guidance boxes
+  const colW=(W-2*M-0.4)/2;
+  s.addShape(p.ShapeType.roundRect,{x:M,y:5.15,w:colW,h:1.15,rectRadius:0.08,fill:{color:"2A1618"},line:{color:RED,width:1}});
+  s.addText([
+    ln("결과: 두 경로를 순차 실행 → 최대 2배 느림",RED,{bold:true,breakLine:true,paraSpaceAfter:4}),
+    ln("대기하는 스레드는 그 시간에 아무 일도 못 함",TEXT,{breakLine:true}),
+  ],{x:M+0.25,y:5.32,w:colW-0.5,h:0.85,fontFace:KFONT,fontSize:13,color:TEXT,margin:0,valign:"top"});
+  s.addShape(p.ShapeType.roundRect,{x:M+colW+0.4,y:5.15,w:colW,h:1.15,rectRadius:0.08,fill:{color:"16240F"},line:{color:GREEN,width:1}});
+  s.addText([
+    ln("피하는 법: 워프 내 스레드가 같은 경로를 타게",GREEN,{bold:true,breakLine:true,paraSpaceAfter:4}),
+    ln("이 저장소의 커널은 if(ptr>=end_ptr) return; 정도라 분기가 거의 균일 → 다이버전스 최소",TEXT,{breakLine:true}),
+  ],{x:M+colW+0.65,y:5.32,w:colW-0.5,h:0.85,fontFace:KFONT,fontSize:12.5,color:TEXT,margin:0,valign:"top"});
+  s.addNotes("한 워프 안에서 분기가 갈리면 GPU가 두 경로를 직렬 실행(마스킹). 데이터로 나눈 분기, 균일한 조건이 유리.");
+})();
+
+// =====================================================================
+// Slide 5c — shared-memory bank conflict diagram (advanced)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"4","공유 메모리 뱅크 충돌(bank conflict)");
+  s.addText([
+    ln("심화 참고 — ",AMBER,{bold:true,breakLine:false}),
+    ln("공유 메모리(shared) 접근 패턴 이야기입니다. 이 저장소는 공유 메모리를 거의 쓰지 않지만, 코얼레싱과 짝을 이루는 개념이라 소개합니다.",MUTED,{breakLine:true}),
+  ],{x:M,y:1.5,w:W-2*M,h:0.6,fontFace:KFONT,fontSize:13.5,color:TEXT,margin:0,valign:"top"});
+  s.addText("공유 메모리는 32개 뱅크(bank)로 나뉩니다. 한 워프가 같은 뱅크의 서로 다른 주소에 접근하면 순차화됩니다.",{x:M,y:2.15,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:14,color:MUTED,margin:0});
+
+  const drawBanks=(y,label,color,mapping,note)=>{
+    s.addText(label,{x:M,y:y+0.05,w:2.4,h:0.55,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:color,margin:0});
+    const bx=M+2.7, cw=0.6, gap=0.1, n=8;
+    for(let i=0;i<n;i++){
+      s.addShape(p.ShapeType.roundRect,{x:bx+i*(cw+gap),y,w:cw,h:0.62,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+      s.addText("B"+i,{x:bx+i*(cw+gap),y:y+0.04,w:cw,h:0.28,align:"center",fontFace:KFONT,fontSize:9,color:MUTED,margin:0});
+    }
+    // thread labels mapped to banks
+    mapping.forEach(m=>{
+      const x=bx+m.bank*(cw+gap);
+      s.addText(m.t,{x,y:y+0.3,w:cw,h:0.3,align:"center",valign:"middle",fontFace:MONO,fontSize:10,bold:true,color:m.conflict?RED:color,margin:0});
+    });
+    const nx=bx+n*(cw+gap)+0.1;
+    if(note) s.addText(note,{x:nx,y:y+0.05,w:W-M-nx,h:0.55,valign:"middle",fontFace:KFONT,fontSize:11.5,color:color,margin:0});
+  };
+  // no conflict: T0..T7 -> bank 0..7
+  const noc=[0,1,2,3,4,5,6,7].map(i=>({t:"T"+i,bank:i,conflict:false}));
+  drawBanks(2.7,"충돌 없음",GREEN,noc,"각 스레드가 다른 뱅크 → 1회에 처리");
+  // conflict: T0,T1 -> bank0 ; T2,T3 -> bank1 ...
+  const conf=[{t:"T0",bank:0,conflict:true},{t:"T2",bank:2,conflict:true},{t:"T4",bank:4,conflict:true},{t:"T6",bank:6,conflict:true}];
+  // put two threads on same bank by stacking label — simulate by marking banks 0 with T0/T1
+  drawBanks(3.75,"2-way 충돌",RED,[{t:"T0·T1",bank:0,conflict:true},{t:"T2·T3",bank:2,conflict:true},{t:"T4·T5",bank:4,conflict:true},{t:"T6·T7",bank:6,conflict:true}],"둘씩 같은 뱅크 → 2회로 순차화");
+
+  s.addShape(p.ShapeType.roundRect,{x:M,y:4.9,w:W-2*M,h:1.35,rectRadius:0.08,fill:{color:CARD},line:{type:"none"}});
+  s.addText([
+    ln("핵심: 워프의 스레드들이 서로 다른 뱅크에 접근하면 한 번에, 같은 뱅크의 다른 주소면 충돌 수만큼 순차 처리됩니다.",TEXT,{breakLine:true,paraSpaceAfter:6}),
+    ln("코얼레싱(전역 메모리) · 뱅크 충돌(공유 메모리) · 다이버전스(분기) — 워프 단위 성능의 3대 주제입니다.",GREEN,{breakLine:true}),
+  ],{x:M+0.3,y:5.05,w:W-2*M-0.6,h:1.1,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.15});
+  s.addText("cuda_memtest는 공유 메모리를 쓰지 않으므로 실제로는 해당 없음 — 향후 공유 메모리 최적화 학습을 위한 참고입니다.",{x:M,y:6.4,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:12.5,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("심화/선택 슬라이드. 공유 메모리 32뱅크, 같은 뱅크 다른 주소 접근 시 충돌. 이 저장소엔 없지만 성능 3종 세트 완성용.");
 })();
 
 // =====================================================================
@@ -219,6 +357,43 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
   s.addText("왜 이벤트도 스트림에?",{x:M+colW+0.65,y:4.7,w:colW-0.5,h:0.5,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
   s.addText("이벤트를 같은 스트림에 기록해야 그 스트림의 커널들 시간을 정확히 잽니다.",{x:M+colW+0.65,y:5.2,w:colW-0.5,h:0.9,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.15});
   s.addNotes("스트림은 심화 주제라 개념만. 여러 스트림으로 겹쳐 실행(overlap)하는 건 향후 주제로 남깁니다.");
+})();
+
+// =====================================================================
+// Slide 7b — stream overlap (conceptual Gantt)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"7","스트림 겹침(overlap) · 개념도");
+  s.addText("여러 스트림을 쓰면 한 스트림의 복사와 다른 스트림의 연산을 겹쳐 전체 시간을 줄일 수 있습니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const u=0.82, x0=M+2.7, laneH=0.55;
+  const seg=(x0u,y,wu,color,label)=>{
+    s.addShape(p.ShapeType.roundRect,{x:x0+x0u*u,y,w:wu*u-0.04,h:laneH,rectRadius:0.04,fill:{color},line:{type:"none"}});
+    s.addText(label,{x:x0+x0u*u,y,w:wu*u-0.04,h:laneH,align:"center",valign:"middle",fontFace:KFONT,fontSize:11,bold:true,color:BG,margin:0});
+  };
+  // ① single stream (2 chunks sequential)
+  s.addText("① 단일 스트림",{x:M,y:2.35,w:2.5,h:0.55,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:TEAL,margin:0});
+  s.addText("(청크 2개 순차)",{x:M,y:2.78,w:2.5,h:0.4,valign:"middle",fontFace:KFONT,fontSize:11,color:MUTED,margin:0});
+  seg(0,2.3,1,TEAL,"복사"); seg(1,2.3,2,GREEN,"커널"); seg(3,2.3,1,TEAL,"복사");
+  seg(4,2.3,1,TEAL,"복사"); seg(5,2.3,2,GREEN,"커널"); seg(7,2.3,1,TEAL,"복사");
+  // ② two streams overlapped
+  s.addText("② 2 스트림",{x:M,y:3.75,w:2.5,h:0.5,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  s.addText("(겹침 overlap)",{x:M,y:4.15,w:2.5,h:0.4,valign:"middle",fontFace:KFONT,fontSize:11,color:MUTED,margin:0});
+  seg(0,3.9,1,TEAL,"복사"); seg(1,3.9,2,GREEN,"커널"); seg(3,3.9,1,TEAL,"복사");
+  seg(1,4.55,1,TEAL,"복사"); seg(3,4.55,2,GREEN,"커널"); seg(5,4.55,1,TEAL,"복사");
+  // savings bracket 6u..8u
+  s.addShape(p.ShapeType.line,{x:x0+6*u,y:5.3,w:2*u,h:0,line:{color:AMBER,width:2,beginArrowType:"triangle",endArrowType:"triangle"}});
+  s.addText("절약된 시간",{x:x0+6*u-0.4,y:5.35,w:2*u+0.8,h:0.35,align:"center",fontFace:KFONT,fontSize:11,bold:true,color:AMBER,margin:0});
+  // time axis hint
+  s.addText("→ 시간",{x:x0+8*u+0.1,y:2.3,w:1.2,h:0.4,valign:"middle",fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  s.addShape(p.ShapeType.roundRect,{x:M,y:5.85,w:W-2*M,h:1.1,rectRadius:0.08,fill:{color:CARD},line:{type:"none"}});
+  s.addText([
+    ln("이 저장소: ",AMBER,{bold:true,breakLine:false}),
+    ln("test10은 데이터가 이미 GPU에 있어 복사(H2D/D2H)가 없습니다 → 단일 스트림으로 충분합니다. 겹침은 복사와 연산이 섞이는 워크로드에서 빛을 봅니다.",TEXT,{breakLine:true}),
+  ],{x:M+0.3,y:6.05,w:W-2*M-0.6,h:0.8,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"middle",lineSpacingMultiple:1.15});
+  s.addNotes("개념도. 복사엔진과 연산엔진이 별개라 겹침이 가능. test10은 복사가 없어 단일 스트림으로 충분하다는 점을 정직하게 전달.");
 })();
 
 // =====================================================================

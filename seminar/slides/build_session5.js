@@ -85,6 +85,49 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 3b — multi-GPU system architecture (parallel per-GPU stacks)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","멀티 GPU 시스템 구조 · 병렬 스택");
+  s.addText("하나의 프로세스가 GPU마다 독립된 스레드 스택을 띄우고, 모두 동시에 검사를 실행합니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // Host process box (spans width)
+  const hx=M, hy=1.95, hw=W-2*M, hh=0.72;
+  s.addShape(p.ShapeType.roundRect,{x:hx,y:hy,w:hw,h:hh,rectRadius:0.06,fill:{color:"25303F"},line:{color:MUTED,width:1.5}});
+  s.addText("main() 프로세스  ·  GPU 개수만큼 pthread_create (cuda_memtest.cpp:543)",{x:hx+0.3,y:hy,w:hw-0.6,h:hh,valign:"middle",fontFace:KFONT,fontSize:15,bold:true,color:TEXT,margin:0});
+
+  const cols=[GREEN,TEAL,AMBER];
+  const colW=(W-2*M-2*0.45)/3;
+  const cells=[
+    ["스레드 (pthread)","pthread_create로 생성"],
+    ["cudaSetDevice(i)","gpu_idx = i (thread-local)"],
+    ["allocate_small_mem","오류 버퍼 할당 (이 GPU)"],
+    ["run_tests","11개 테스트 실행"],
+    ["GPU i · VRAM","독립 메모리 (검사 대상)"],
+  ];
+  for(let ci=0;ci<3;ci++){
+    const col=cols[ci], cx=M+ci*(colW+0.45);
+    // down arrow from host to column
+    s.addShape(p.ShapeType.line,{x:cx+colW/2,y:hy+hh+0.02,w:0,h:0.28,line:{color:col,width:2.5,endArrowType:"triangle"}});
+    let cy=hy+hh+0.4;
+    for(let ri=0;ri<cells.length;ri++){
+      const last=ri===cells.length-1;
+      const h= 0.54;
+      s.addShape(p.ShapeType.roundRect,{x:cx,y:cy,w:colW,h,rectRadius:0.05,fill:{color:last?"1A2418":CODEBG},line:{color:last?col:LINE,width:last?1.5:1}});
+      const label = ri===0 ? ("스레드 "+ci+" (pthread)") : (ri===4 ? ("GPU "+ci+" · VRAM") : cells[ri][0]);
+      s.addText(label,{x:cx+0.18,y:cy+0.06,w:colW-0.36,h:0.28,fontFace:MONO,fontSize:12,bold:true,color:last?col:TEXT,margin:0,valign:"middle"});
+      s.addText(cells[ri][1],{x:cx+0.18,y:cy+0.31,w:colW-0.36,h:0.21,fontFace:KFONT,fontSize:10.5,color:MUTED,margin:0,valign:"middle"});
+      // connector between cells
+      if(!last) s.addShape(p.ShapeType.line,{x:cx+colW/2,y:cy+h+0.003,w:0,h:0.1,line:{color:LINE,width:1.5,endArrowType:"triangle"}});
+      cy+=h+0.11;
+    }
+  }
+  s.addText("각 열은 완전히 독립·병렬 — 한 GPU의 오류가 다른 GPU를 멈추지 않습니다. (예: S1070 = 노드당 4 GPU)",{x:M,y:6.62,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("GPU마다 pthread→cudaSetDevice→버퍼할당→테스트→VRAM의 독립 스택. 병렬·독립 실행이 핵심. 논문의 S1070(4 GPU/노드)과 연결.");
+})();
+
+// =====================================================================
 // Slide 4 — thread-local gpu_idx (code)
 // =====================================================================
 (()=>{

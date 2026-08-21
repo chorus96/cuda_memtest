@@ -4,7 +4,7 @@ p.layout = "LAYOUT_WIDE"; // 13.3 x 7.5
 
 // ---- palette (shared with Session 1) ----
 const BG="13161C", CARD="1E232C", CODEBG="0E1116", TEXT="E8EDF2", MUTED="9AA6B2";
-const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", LINE="2C3440";
+const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", RED="E0645B", LINE="2C3440";
 const KFONT="Malgun Gothic", MONO="Courier New";
 const W=13.3, H=7.5, M=0.6;
 
@@ -80,6 +80,102 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
     y+=1.44;
   });
   s.addNotes("입문 단계에선 '전역 메모리 = 크고 느림 = 검사 대상' 하나만 확실히. 나머지는 세션 3.");
+})();
+
+// =====================================================================
+// Slide 3b — memory hierarchy block diagram (nested scopes)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","메모리 계층 구조 · 범위(scope)로 보기");
+  s.addText("메모리는 '누가 접근할 수 있는가(범위)'로 나뉩니다. 범위가 넓을수록 크지만 느립니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // nested boxes: Global > Shared > Register  (left ~8.4 wide)
+  const gx=M, gy=2.05, gw=8.0, gh=4.15;
+  s.addShape(p.ShapeType.roundRect,{x:gx,y:gy,w:gw,h:gh,rectRadius:0.07,fill:{color:"14201A"},line:{color:GREEN,width:1.5}});
+  s.addText("전역 메모리(Global)  ·  모든 스레드 접근  ·  크고 느림 (예: 4 GB)",{x:gx+0.25,y:gy+0.14,w:gw-0.5,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  s.addText("← cuda_memtest가 검사하는 대상",{x:gx+0.25,y:gy+0.52,w:gw-0.5,h:0.32,fontFace:KFONT,fontSize:11.5,italic:true,color:GREEN,margin:0});
+
+  const sx=gx+0.4, sy=gy+0.95, sw=gw-0.8, sh=gh-1.35;
+  s.addShape(p.ShapeType.roundRect,{x:sx,y:sy,w:sw,h:sh,rectRadius:0.06,fill:{color:"12212A"},line:{color:TEAL,width:1.5}});
+  s.addText("공유 메모리(Shared)  ·  블록 내 스레드끼리 공유  ·  빠름",{x:sx+0.25,y:sy+0.14,w:sw-0.5,h:0.35,fontFace:KFONT,fontSize:13.5,bold:true,color:TEAL,margin:0});
+  s.addText("이 저장소는 거의 쓰지 않음 (개념만)",{x:sx+0.25,y:sy+0.5,w:sw-0.5,h:0.3,fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  const rx=sx+0.4, ry=sy+0.9, rw=sw-0.8, rh=sh-1.25;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:ry,w:rw,h:rh,rectRadius:0.05,fill:{color:CODEBG},line:{color:AMBER,width:1.5}});
+  s.addText("레지스터(Register)  ·  스레드 전용  ·  가장 빠름·가장 작음",{x:rx+0.25,y:ry+0.18,w:rw-0.5,h:0.4,fontFace:KFONT,fontSize:13.5,bold:true,color:AMBER,margin:0});
+  s.addText("커널 안의 지역 변수 (i, ptr 등)",{x:rx+0.25,y:ry+0.6,w:rw-0.5,h:0.4,fontFace:MONO,fontSize:12,color:TEXT,margin:0});
+
+  // Host memory box (right) + cudaMemcpy arrow
+  const mx=gx+gw+0.55, my=2.8, mw=W-M-(gx+gw+0.55), mh=2.6;
+  s.addShape(p.ShapeType.roundRect,{x:mx,y:my,w:mw,h:mh,rectRadius:0.07,fill:{color:CARD},line:{color:MUTED,width:1.5}});
+  s.addText("호스트 메모리",{x:mx+0.2,y:my+0.25,w:mw-0.4,h:0.4,align:"center",fontFace:KFONT,fontSize:15,bold:true,color:TEXT,margin:0});
+  s.addText("(CPU RAM)",{x:mx+0.2,y:my+0.68,w:mw-0.4,h:0.35,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  s.addText("GPU와 별개",{x:mx+0.2,y:my+1.15,w:mw-0.4,h:0.35,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  s.addText("cudaMemcpy로\n오류 정보를 여기로",{x:mx+0.2,y:my+1.6,w:mw-0.4,h:0.7,align:"center",fontFace:KFONT,fontSize:11.5,italic:true,color:TEAL,margin:0,lineSpacingMultiple:1.05});
+  // arrow between global(gx+gw) and host(mx)
+  s.addShape(p.ShapeType.line,{x:gx+gw+0.03,y:my+1.05,w:mx-(gx+gw)-0.06,h:0,line:{color:TEAL,width:2.5,beginArrowType:"triangle",endArrowType:"triangle"}});
+
+  s.addText("범위: 레지스터(스레드) ⊂ 공유(블록) ⊂ 전역(전체 GPU). 호스트 메모리는 GPU 밖 — cudaMemcpy로만 오갑니다.",{x:M,y:6.4,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("중첩 박스로 '범위'를 시각화. 안쪽=빠르고 작음/좁은 범위, 바깥=느리고 큼/넓은 범위. 전역이 검사 대상.");
+})();
+
+// =====================================================================
+// Slide 3c — address mapping & address-bus test
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","메모리 주소 매핑 · 주소 버스 검사");
+  s.addText("스레드가 계산한 주소가 실제 어느 물리 셀로 가는지, 그 '주소 배선'이 멀쩡한지가 메모리 검사의 핵심입니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:14.5,color:MUTED,margin:0});
+
+  const colW=(W-2*M-0.4)/2, y0=1.95, bh=2.55;
+  // LEFT: software address calc
+  s.addShape(p.ShapeType.roundRect,{x:M,y:y0,w:colW,h:bh,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("① 소프트웨어: 주소 계산",{x:M+0.25,y:y0+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  codePanel(s,M+0.25,y0+0.6,colW-0.5,0.6,[
+    ln("addr = _ptr + blockIdx.x*BLOCKSIZE + i*sizeof(uint)",GREEN),
+  ],{fontSize:11.5});
+  const chips=[["_ptr","기준 주소",MUTED],["+ blockIdx×1MB","블록 구역",TEAL],["+ i×4B","원소 위치",GREEN]];
+  const chw=(colW-0.5-0.3)/3;
+  chips.forEach((c,i)=>{
+    const x=M+0.25+i*(chw+0.15);
+    s.addShape(p.ShapeType.roundRect,{x,y:y0+1.4,w:chw,h:0.85,rectRadius:0.05,fill:{color:CODEBG},line:{color:c[2],width:1}});
+    s.addText(c[0],{x:x+0.05,y:y0+1.5,w:chw-0.1,h:0.4,align:"center",fontFace:MONO,fontSize:10.5,bold:true,color:c[2],margin:0});
+    s.addText(c[1],{x:x+0.05,y:y0+1.9,w:chw-0.1,h:0.3,align:"center",fontFace:KFONT,fontSize:10,color:MUTED,margin:0});
+  });
+  s.addText("→ 평탄한 선형 주소(flat address)",{x:M+0.25,y:y0+bh-0.32,w:colW-0.5,h:0.28,fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  // RIGHT: hardware decoding
+  const rx=M+colW+0.4;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:y0,w:colW,h:bh,rectRadius:0.07,fill:{color:CARD},line:{color:AMBER,width:1.5}});
+  s.addText("② 하드웨어: 주소 디코딩",{x:rx+0.25,y:y0+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:AMBER,margin:0});
+  s.addText("주소 디코더(주소 배선)가 주소 비트를 나눠 물리 셀을 고릅니다.",{x:rx+0.25,y:y0+0.58,w:colW-0.5,h:0.32,fontFace:KFONT,fontSize:11.5,color:MUTED,margin:0});
+  const segs=[["뱅크(bank)",TEAL],["행(row)",GREEN],["열(column)",AMBER]];
+  const sw=(colW-0.5-0.2)/3;
+  segs.forEach((sg,i)=>{
+    const x=rx+0.25+i*(sw+0.1);
+    s.addShape(p.ShapeType.roundRect,{x,y:y0+1.05,w:sw,h:0.55,rectRadius:0.04,fill:{color:CODEBG},line:{color:sg[1],width:1}});
+    s.addText(sg[0],{x,y:y0+1.05,w:sw,h:0.55,align:"center",valign:"middle",fontFace:KFONT,fontSize:11,bold:true,color:sg[1],margin:0});
+  });
+  s.addText("주소 비트 → (뱅크 · 행 · 열)로 분해",{x:rx+0.25,y:y0+1.68,w:colW-0.5,h:0.3,fontFace:MONO,fontSize:10.5,color:MUTED,margin:0});
+  s.addText([
+    ln("주소 배선 하나가 고착되면 ",TEXT,{breakLine:false}),
+    ln("A로 쓴 값이 엉뚱한 A'에 저장(에일리어싱)",RED,{bold:true,breakLine:false}),
+    ln(" — 패턴만 봐선 놓칠 수 있습니다.",TEXT,{breakLine:true}),
+  ],{x:rx+0.25,y:y0+2.05,w:colW-0.5,h:0.42,fontFace:KFONT,fontSize:11.5,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.0});
+
+  // bottom: test 0/1 band
+  s.addShape(p.ShapeType.roundRect,{x:M,y:4.7,w:W-2*M,h:1.35,rectRadius:0.08,fill:{color:"14201A"},line:{color:GREEN,width:1}});
+  s.addText("주소 배선을 겨냥한 검사 (원논문 Table I: address bus test)",{x:M+0.3,y:4.82,w:W-2*M-0.6,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  s.addText([
+    ln("Test 0 [Walking 1 bit]: ",GREEN,{bold:true,breakLine:false}),
+    ln("주소의 비트를 하나씩 바꿔가며 정말 다른 셀로 가는지 확인 → 주소 배선 검사",TEXT,{breakLine:true,paraSpaceAfter:4}),
+    ln("Test 1 [Own address]: ",GREEN,{bold:true,breakLine:false}),
+    ln("각 셀에 '자기 주소'를 써 넣고 되읽어, 그 값이 여전히 자기 주소인지 확인 → 잘못 매핑되면 불일치",TEXT,{breakLine:true}),
+  ],{x:M+0.3,y:5.22,w:W-2*M-0.6,h:0.8,fontFace:KFONT,fontSize:12.5,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.1});
+
+  s.addText("이 저장소: Test 0·1은 데이터가 아니라 '주소 자체'를 검사합니다. Test 2~8(이동 반전)은 데이터 셀 값을 검사합니다.",{x:M,y:6.15,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:12,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("주소 매핑: SW가 선형 주소 계산 → HW 디코더가 뱅크/행/열로 분해. 주소 배선 고장=aliasing. Test0(walking 1비트)·Test1(own address)이 이를 검사. 원논문 Table I.");
 })();
 
 // =====================================================================
@@ -164,6 +260,43 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 6b — host<->device sequence diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"5","호스트↔디바이스 시퀀스(sequence)");
+  s.addText("move_inv_test가 CPU와 GPU 사이에서 시간순으로 주고받는 상호작용입니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const xh=3.0, xd=10.3, headY=1.95, headH=0.6;
+  // lifeline headers
+  s.addShape(p.ShapeType.roundRect,{x:xh-1.4,y:headY,w:2.8,h:headH,rectRadius:0.06,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("호스트(CPU)",{x:xh-1.4,y:headY,w:2.8,h:headH,align:"center",valign:"middle",fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:xd-1.4,y:headY,w:2.8,h:headH,rectRadius:0.06,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("디바이스(GPU)",{x:xd-1.4,y:headY,w:2.8,h:headH,align:"center",valign:"middle",fontFace:KFONT,fontSize:15,bold:true,color:GREEN,margin:0});
+  // lifelines (dashed vertical)
+  const llTop=headY+headH, llBot=6.35;
+  s.addShape(p.ShapeType.line,{x:xh,y:llTop,w:0,h:llBot-llTop,line:{color:LINE,width:1.5,dashType:"dash"}});
+  s.addShape(p.ShapeType.line,{x:xd,y:llTop,w:0,h:llBot-llTop,line:{color:LINE,width:1.5,dashType:"dash"}});
+
+  // messages
+  const msg=(y,dir,color,dashed,label)=>{
+    const opt={color,width:2.2}; if(dashed) opt.dashType="dash";
+    if(dir>0) opt.endArrowType="triangle"; else opt.beginArrowType="triangle";
+    s.addShape(p.ShapeType.line,{x:xh,y,w:xd-xh,h:0,line:opt});
+    s.addText(label,{x:xh+0.1,y:y-0.34,w:xd-xh-0.2,h:0.3,align:"center",valign:"middle",fontFace:KFONT,fontSize:12.5,bold:true,color:color,margin:0});
+  };
+  msg(2.95, 1, GREEN, false, "① write<<<>>> — 전체 메모리에 p1 기록");
+  msg(3.75, -1, TEAL, true, "커널 종료 = 메모리 반영(flush) — DeviceSynchronize");
+  msg(4.55, 1, GREEN, false, "② readwrite<<<>>> — p1 검사 후 p2 기록");
+  msg(5.35, -1, TEAL, true, "error_checking: cudaMemcpy(D→H) — 오류 정보 회수");
+  msg(6.15, 1, GREEN, false, "③ read<<<>>> — p2 다시 검사");
+
+  // note
+  s.addText("핵심: ①과 ② 사이의 '커널 종료(flush)'가 있어야 ②가 메모리에 반영된 값을 읽습니다.",{x:M,y:6.6,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:12.5,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("UML 시퀀스풍. 실선=호스트가 GPU에 커널 요청, 점선=GPU→호스트 반환(동기화/데이터). flush가 정확성의 열쇠.");
+})();
+
+// =====================================================================
 // Slide 7 — moving inversion algorithm (visual)
 // =====================================================================
 (()=>{
@@ -192,6 +325,53 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
   ],{x:M,y:4.9,w:W-2*M,h:1.0,fontFace:KFONT,fontSize:16,color:TEXT,margin:0,valign:"top"});
   s.addText("Test 2는 p1=0x00000000, p2=0xFFFFFFFF (모두 0 / 모두 1)로 이 검사를 수행합니다. (tests.cpp:705)",{x:M,y:6.1,w:W-2*M,h:0.5,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,margin:0});
   s.addNotes("고착(stuck-at) 오류 개념을 비트 그림으로. 왜 한 방향 검사로는 부족한지 강조.");
+})();
+
+// =====================================================================
+// Slide 7b — test patterns & fault types
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"6","메모리 테스트 패턴과 결함 유형(fault types)");
+  s.addText("패턴마다 노리는 결함이 다릅니다. 여러 패턴을 조합해 다양한 고장을 잡아냅니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:14.5,color:MUTED,margin:0});
+
+  // pattern strips
+  const strip=(y,label,bits,tag,tagcol)=>{
+    s.addText(label,{x:M,y:y,w:2.35,h:0.5,valign:"middle",fontFace:KFONT,fontSize:12.5,bold:true,color:TEXT,margin:0});
+    const bx=M+2.45, cw=0.55, gap=0.08;
+    for(let i=0;i<bits.length;i++){
+      const on=bits[i]===1;
+      s.addShape(p.ShapeType.roundRect,{x:bx+i*(cw+gap),y,w:cw,h:0.5,rectRadius:0.04,fill:{color:on?GREEN:CODEBG},line:{color:on?GREEN:LINE,width:1}});
+      s.addText(String(bits[i]),{x:bx+i*(cw+gap),y,w:cw,h:0.5,align:"center",valign:"middle",fontFace:MONO,fontSize:13,bold:true,color:on?BG:MUTED,margin:0});
+    }
+    const tx=bx+bits.length*(cw+gap)+0.15;
+    s.addText(tag,{x:tx,y:y,w:W-M-tx,h:0.5,valign:"middle",fontFace:KFONT,fontSize:11.5,color:tagcol||MUTED,margin:0});
+  };
+  strip(2.3,"워킹 1비트",[0,0,0,0,0,0,0,1],"한 비트씩 이동 → 주소·배선 검사 (Test 0·6)",TEAL);
+  strip(2.9,"전부 0 / 전부 1",[1,1,1,1,1,1,1,1],"0x00000000 ↔ 0xFFFFFFFF → 고착 검사 (Test 2)",GREEN);
+  strip(3.5,"8비트 반복",[1,0,0,0,0,0,0,0],"0x80808080 (8비트 폭) → 미세 고착 (Test 3)",GREEN);
+  strip(4.1,"난수 + 보수",[1,0,1,1,0,1,0,0],"무작위 값과 그 보수 → 데이터 민감 오류 (Test 4·7·8·10)",AMBER);
+
+  // fault type chips
+  s.addShape(p.ShapeType.roundRect,{x:M,y:4.85,w:W-2*M,h:1.55,rectRadius:0.08,fill:{color:CARD},line:{type:"none"}});
+  s.addText("결함 유형별 담당 테스트 (원논문 Table I)",{x:M+0.3,y:4.97,w:W-2*M-0.6,h:0.35,fontFace:KFONT,fontSize:13,bold:true,color:TEXT,margin:0});
+  const faults=[
+    ["주소 버스","address bus","Test 0·1",TEAL],
+    ["스턱-앳 고착","stuck-at","Test 2·3",GREEN],
+    ["데이터 민감","data sensitive","Test 4~8",AMBER],
+    ["데이터 보존","retention","Test 9",TEAL],
+    ["소프트 오류","soft error","Test 10",RED],
+  ];
+  const cw=(W-2*M-0.6-4*0.2)/5;
+  faults.forEach((f,i)=>{
+    const x=M+0.3+i*(cw+0.2);
+    s.addShape(p.ShapeType.roundRect,{x,y:5.42,w:cw,h:0.85,rectRadius:0.06,fill:{color:CODEBG},line:{color:f[3],width:1.2}});
+    s.addText(f[0],{x:x+0.1,y:5.5,w:cw-0.2,h:0.32,align:"center",fontFace:KFONT,fontSize:12.5,bold:true,color:f[3],margin:0});
+    s.addText(f[1],{x:x+0.1,y:5.8,w:cw-0.2,h:0.24,align:"center",fontFace:KFONT,fontSize:9,color:MUTED,margin:0});
+    s.addText(f[2],{x:x+0.1,y:6.02,w:cw-0.2,h:0.24,align:"center",fontFace:MONO,fontSize:10.5,bold:true,color:TEXT,margin:0});
+  });
+  s.addText("초록 칸 = 비트 1, 어두운 칸 = 비트 0. Test 9(비트 페이드)는 값을 쓰고 오래 두어 '지워지는지' 봅니다.",{x:M,y:6.55,w:W-2*M,h:0.35,fontFace:KFONT,fontSize:11.5,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("패턴→결함 매핑. 워킹=주소/배선, 0·1=고착, 8비트=미세고착, 난수=데이터민감, 비트페이드=보존, 난수반복=소프트. 원논문 Table I 근거.");
 })();
 
 // =====================================================================
