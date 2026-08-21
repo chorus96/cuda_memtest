@@ -124,6 +124,48 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 4b — atomicAdd serialization timeline (before/after)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"3","원자연산이 경쟁을 없애는 과정");
+  s.addText("같은 상황(err=5, 두 스레드가 +1)을 일반 증가와 atomicAdd로 비교합니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const colW=(W-2*M-0.5)/2, boxY=2.05, boxH=4.35;
+  const stepRow=(x,y,w,h,tlabel,tcolor,text,tc)=>{
+    s.addShape(p.ShapeType.roundRect,{x,y,w,h,rectRadius:0.04,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText(tlabel,{x:x+0.12,y,w:0.6,h,valign:"middle",align:"center",fontFace:MONO,fontSize:12,bold:true,color:tcolor,margin:0});
+    s.addText(text,{x:x+0.78,y,w:w-0.9,h,valign:"middle",fontFace:KFONT,fontSize:13,color:tc||TEXT,margin:0});
+  };
+
+  // LEFT — plain ++ (race)
+  const lx=M;
+  s.addShape(p.ShapeType.roundRect,{x:lx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:RED,width:1.5}});
+  s.addText("① 일반 ++  (경쟁 조건)",{x:lx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:16,bold:true,color:RED,margin:0});
+  const lrx=lx+0.28, lrw=colW-0.56; let ly=boxY+0.7;
+  stepRow(lrx,ly,lrw,0.55,"t1",TEAL,"스레드 A : err 읽음 → 5"); ly+=0.67;
+  stepRow(lrx,ly,lrw,0.55,"t2",AMBER,"스레드 B : err 읽음 → 5  (끼어듦!)",AMBER); ly+=0.67;
+  stepRow(lrx,ly,lrw,0.55,"t3",TEAL,"스레드 A : 5+1 = 6 저장"); ly+=0.67;
+  stepRow(lrx,ly,lrw,0.55,"t4",AMBER,"스레드 B : 5+1 = 6 저장"); ly+=0.75;
+  s.addShape(p.ShapeType.roundRect,{x:lrx,y:ly,w:lrw,h:0.55,rectRadius:0.05,fill:{color:"2A1618"},line:{color:RED,width:1}});
+  s.addText("결과 err = 6  ·  증가 하나 유실 (틀림)",{x:lrx,y:ly,w:lrw,h:0.55,align:"center",valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:RED,margin:0});
+
+  // RIGHT — atomicAdd (serialized)
+  const rx=M+colW+0.5;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("② atomicAdd  (원자적)",{x:rx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:16,bold:true,color:GREEN,margin:0});
+  const rrx=rx+0.28, rrw=colW-0.56; let ry=boxY+0.7;
+  stepRow(rrx,ry,rrw,0.9,"t1",TEAL,"A : atomicAdd → 5 읽고 6 저장\n     (읽기+쓰기가 한 덩어리)",TEXT); ry+=1.02;
+  stepRow(rrx,ry,rrw,0.9,"t2",GREEN,"B : atomicAdd → 6 읽고 7 저장\n     (A가 끝난 뒤 실행)",TEXT); ry+=1.02;
+  s.addText("원자연산은 중간에 끼어들 수 없습니다 (쪼갤 수 없는 하나의 동작)",{x:rrx,y:ry,w:rrw,h:0.4,fontFace:KFONT,fontSize:11.5,italic:true,color:MUTED,margin:0}); ry+=0.42;
+  s.addShape(p.ShapeType.roundRect,{x:rrx,y:ry,w:rrw,h:0.55,rectRadius:0.05,fill:{color:"16240F"},line:{color:GREEN,width:1}});
+  s.addText("결과 err = 7  ·  정확히 셈 (정확)",{x:rrx,y:ry,w:rrw,h:0.55,align:"center",valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+
+  s.addText("210만 스레드가 동시에 오류를 세도, atomicAdd 덕분에 총 개수가 정확합니다. (RECORD_ERR, tests.cpp:76)",{x:M,y:6.55,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("왼쪽=끼어들기로 유실, 오른쪽=원자연산이 읽기-쓰기를 직렬화해 정확. 슬라이드 3의 문제에 대한 해답 타임라인.");
+})();
+
+// =====================================================================
 // Slide 5 — RECORD_ERR macro dissection (code)
 // =====================================================================
 (()=>{
