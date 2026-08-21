@@ -4,7 +4,7 @@ p.layout = "LAYOUT_WIDE"; // 13.3 x 7.5
 
 // ---- palette (shared with Session 1) ----
 const BG="13161C", CARD="1E232C", CODEBG="0E1116", TEXT="E8EDF2", MUTED="9AA6B2";
-const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", LINE="2C3440";
+const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", RED="E0645B", LINE="2C3440";
 const KFONT="Malgun Gothic", MONO="Courier New";
 const W=13.3, H=7.5, M=0.6;
 
@@ -118,6 +118,64 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 
   s.addText("범위: 레지스터(스레드) ⊂ 공유(블록) ⊂ 전역(전체 GPU). 호스트 메모리는 GPU 밖 — cudaMemcpy로만 오갑니다.",{x:M,y:6.4,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
   s.addNotes("중첩 박스로 '범위'를 시각화. 안쪽=빠르고 작음/좁은 범위, 바깥=느리고 큼/넓은 범위. 전역이 검사 대상.");
+})();
+
+// =====================================================================
+// Slide 3c — address mapping & address-bus test
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","메모리 주소 매핑 · 주소 버스 검사");
+  s.addText("스레드가 계산한 주소가 실제 어느 물리 셀로 가는지, 그 '주소 배선'이 멀쩡한지가 메모리 검사의 핵심입니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:14.5,color:MUTED,margin:0});
+
+  const colW=(W-2*M-0.4)/2, y0=1.95, bh=2.55;
+  // LEFT: software address calc
+  s.addShape(p.ShapeType.roundRect,{x:M,y:y0,w:colW,h:bh,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("① 소프트웨어: 주소 계산",{x:M+0.25,y:y0+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  codePanel(s,M+0.25,y0+0.6,colW-0.5,0.6,[
+    ln("addr = _ptr + blockIdx.x*BLOCKSIZE + i*sizeof(uint)",GREEN),
+  ],{fontSize:11.5});
+  const chips=[["_ptr","기준 주소",MUTED],["+ blockIdx×1MB","블록 구역",TEAL],["+ i×4B","원소 위치",GREEN]];
+  const chw=(colW-0.5-0.3)/3;
+  chips.forEach((c,i)=>{
+    const x=M+0.25+i*(chw+0.15);
+    s.addShape(p.ShapeType.roundRect,{x,y:y0+1.4,w:chw,h:0.85,rectRadius:0.05,fill:{color:CODEBG},line:{color:c[2],width:1}});
+    s.addText(c[0],{x:x+0.05,y:y0+1.5,w:chw-0.1,h:0.4,align:"center",fontFace:MONO,fontSize:10.5,bold:true,color:c[2],margin:0});
+    s.addText(c[1],{x:x+0.05,y:y0+1.9,w:chw-0.1,h:0.3,align:"center",fontFace:KFONT,fontSize:10,color:MUTED,margin:0});
+  });
+  s.addText("→ 평탄한 선형 주소(flat address)",{x:M+0.25,y:y0+bh-0.32,w:colW-0.5,h:0.28,fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  // RIGHT: hardware decoding
+  const rx=M+colW+0.4;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:y0,w:colW,h:bh,rectRadius:0.07,fill:{color:CARD},line:{color:AMBER,width:1.5}});
+  s.addText("② 하드웨어: 주소 디코딩",{x:rx+0.25,y:y0+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:AMBER,margin:0});
+  s.addText("주소 디코더(주소 배선)가 주소 비트를 나눠 물리 셀을 고릅니다.",{x:rx+0.25,y:y0+0.58,w:colW-0.5,h:0.32,fontFace:KFONT,fontSize:11.5,color:MUTED,margin:0});
+  const segs=[["뱅크(bank)",TEAL],["행(row)",GREEN],["열(column)",AMBER]];
+  const sw=(colW-0.5-0.2)/3;
+  segs.forEach((sg,i)=>{
+    const x=rx+0.25+i*(sw+0.1);
+    s.addShape(p.ShapeType.roundRect,{x,y:y0+1.05,w:sw,h:0.55,rectRadius:0.04,fill:{color:CODEBG},line:{color:sg[1],width:1}});
+    s.addText(sg[0],{x,y:y0+1.05,w:sw,h:0.55,align:"center",valign:"middle",fontFace:KFONT,fontSize:11,bold:true,color:sg[1],margin:0});
+  });
+  s.addText("주소 비트 → (뱅크 · 행 · 열)로 분해",{x:rx+0.25,y:y0+1.68,w:colW-0.5,h:0.3,fontFace:MONO,fontSize:10.5,color:MUTED,margin:0});
+  s.addText([
+    ln("주소 배선 하나가 고착되면 ",TEXT,{breakLine:false}),
+    ln("A로 쓴 값이 엉뚱한 A'에 저장(에일리어싱)",RED,{bold:true,breakLine:false}),
+    ln(" — 패턴만 봐선 놓칠 수 있습니다.",TEXT,{breakLine:true}),
+  ],{x:rx+0.25,y:y0+2.05,w:colW-0.5,h:0.42,fontFace:KFONT,fontSize:11.5,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.0});
+
+  // bottom: test 0/1 band
+  s.addShape(p.ShapeType.roundRect,{x:M,y:4.7,w:W-2*M,h:1.35,rectRadius:0.08,fill:{color:"14201A"},line:{color:GREEN,width:1}});
+  s.addText("주소 배선을 겨냥한 검사 (원논문 Table I: address bus test)",{x:M+0.3,y:4.82,w:W-2*M-0.6,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  s.addText([
+    ln("Test 0 [Walking 1 bit]: ",GREEN,{bold:true,breakLine:false}),
+    ln("주소의 비트를 하나씩 바꿔가며 정말 다른 셀로 가는지 확인 → 주소 배선 검사",TEXT,{breakLine:true,paraSpaceAfter:4}),
+    ln("Test 1 [Own address]: ",GREEN,{bold:true,breakLine:false}),
+    ln("각 셀에 '자기 주소'를 써 넣고 되읽어, 그 값이 여전히 자기 주소인지 확인 → 잘못 매핑되면 불일치",TEXT,{breakLine:true}),
+  ],{x:M+0.3,y:5.22,w:W-2*M-0.6,h:0.8,fontFace:KFONT,fontSize:12.5,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.1});
+
+  s.addText("이 저장소: Test 0·1은 데이터가 아니라 '주소 자체'를 검사합니다. Test 2~8(이동 반전)은 데이터 셀 값을 검사합니다.",{x:M,y:6.15,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:12,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("주소 매핑: SW가 선형 주소 계산 → HW 디코더가 뱅크/행/열로 분해. 주소 배선 고장=aliasing. Test0(walking 1비트)·Test1(own address)이 이를 검사. 원논문 Table I.");
 })();
 
 // =====================================================================
