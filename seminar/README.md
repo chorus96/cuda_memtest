@@ -17,8 +17,10 @@
 | [`slides/세션2_메모리모델과_데이터이동.pptx`](slides/) | 세션 2 슬라이드 덱 (12매) | ✅ 완성 |
 | [`세션3_실습랩.md`](세션3_실습랩.md) | 세션 3 hands-on 실습 가이드 (Ex 1~4) | ✅ 완성 |
 | [`slides/세션3_병렬성설계와_성능.pptx`](slides/) | 세션 3 슬라이드 덱 (11매) | ✅ 완성 |
-| `slides/build_session{1,2,3}.js` | 위 덱을 생성한 pptxgenjs 스크립트 (재생성용) | ✅ |
-| 세션 4~5 슬라이드·실습랩 | 세션 1~3과 동일한 템플릿으로 순차 제작 예정 | ⏳ 예정 |
+| [`세션4_실습랩.md`](세션4_실습랩.md) | 세션 4 hands-on 실습 가이드 (Ex 1~4) | ✅ 완성 |
+| [`slides/세션4_원자연산과_에러핸들링.pptx`](slides/) | 세션 4 슬라이드 덱 (12매) | ✅ 완성 |
+| `slides/build_session{1,2,3,4}.js` | 위 덱을 생성한 pptxgenjs 스크립트 (재생성용) | ✅ |
+| 세션 5 슬라이드·실습랩 | 세션 1~4와 동일한 템플릿으로 제작 예정 | ⏳ 예정 |
 
 ## 세션 로드맵
 
@@ -41,6 +43,7 @@ npm install pptxgenjs      # 최초 1회
 node build_session1.js     # 세션1_CUDA_스레드모델과_첫커널.pptx 생성
 node build_session2.js     # 세션2_메모리모델과_데이터이동.pptx 생성
 node build_session3.js     # 세션3_병렬성설계와_성능.pptx 생성
+node build_session4.js     # 세션4_원자연산과_에러핸들링.pptx 생성
 ```
 
 > 슬라이드는 한글 폰트로 **맑은 고딕(Malgun Gothic)** 을, 코드에는 **Courier New** 를 사용합니다.
