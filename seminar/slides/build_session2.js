@@ -328,6 +328,53 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 7b — test patterns & fault types
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"6","메모리 테스트 패턴과 결함 유형(fault types)");
+  s.addText("패턴마다 노리는 결함이 다릅니다. 여러 패턴을 조합해 다양한 고장을 잡아냅니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:14.5,color:MUTED,margin:0});
+
+  // pattern strips
+  const strip=(y,label,bits,tag,tagcol)=>{
+    s.addText(label,{x:M,y:y,w:2.35,h:0.5,valign:"middle",fontFace:KFONT,fontSize:12.5,bold:true,color:TEXT,margin:0});
+    const bx=M+2.45, cw=0.55, gap=0.08;
+    for(let i=0;i<bits.length;i++){
+      const on=bits[i]===1;
+      s.addShape(p.ShapeType.roundRect,{x:bx+i*(cw+gap),y,w:cw,h:0.5,rectRadius:0.04,fill:{color:on?GREEN:CODEBG},line:{color:on?GREEN:LINE,width:1}});
+      s.addText(String(bits[i]),{x:bx+i*(cw+gap),y,w:cw,h:0.5,align:"center",valign:"middle",fontFace:MONO,fontSize:13,bold:true,color:on?BG:MUTED,margin:0});
+    }
+    const tx=bx+bits.length*(cw+gap)+0.15;
+    s.addText(tag,{x:tx,y:y,w:W-M-tx,h:0.5,valign:"middle",fontFace:KFONT,fontSize:11.5,color:tagcol||MUTED,margin:0});
+  };
+  strip(2.3,"워킹 1비트",[0,0,0,0,0,0,0,1],"한 비트씩 이동 → 주소·배선 검사 (Test 0·6)",TEAL);
+  strip(2.9,"전부 0 / 전부 1",[1,1,1,1,1,1,1,1],"0x00000000 ↔ 0xFFFFFFFF → 고착 검사 (Test 2)",GREEN);
+  strip(3.5,"8비트 반복",[1,0,0,0,0,0,0,0],"0x80808080 (8비트 폭) → 미세 고착 (Test 3)",GREEN);
+  strip(4.1,"난수 + 보수",[1,0,1,1,0,1,0,0],"무작위 값과 그 보수 → 데이터 민감 오류 (Test 4·7·8·10)",AMBER);
+
+  // fault type chips
+  s.addShape(p.ShapeType.roundRect,{x:M,y:4.85,w:W-2*M,h:1.55,rectRadius:0.08,fill:{color:CARD},line:{type:"none"}});
+  s.addText("결함 유형별 담당 테스트 (원논문 Table I)",{x:M+0.3,y:4.97,w:W-2*M-0.6,h:0.35,fontFace:KFONT,fontSize:13,bold:true,color:TEXT,margin:0});
+  const faults=[
+    ["주소 버스","address bus","Test 0·1",TEAL],
+    ["스턱-앳 고착","stuck-at","Test 2·3",GREEN],
+    ["데이터 민감","data sensitive","Test 4~8",AMBER],
+    ["데이터 보존","retention","Test 9",TEAL],
+    ["소프트 오류","soft error","Test 10",RED],
+  ];
+  const cw=(W-2*M-0.6-4*0.2)/5;
+  faults.forEach((f,i)=>{
+    const x=M+0.3+i*(cw+0.2);
+    s.addShape(p.ShapeType.roundRect,{x,y:5.42,w:cw,h:0.85,rectRadius:0.06,fill:{color:CODEBG},line:{color:f[3],width:1.2}});
+    s.addText(f[0],{x:x+0.1,y:5.5,w:cw-0.2,h:0.32,align:"center",fontFace:KFONT,fontSize:12.5,bold:true,color:f[3],margin:0});
+    s.addText(f[1],{x:x+0.1,y:5.8,w:cw-0.2,h:0.24,align:"center",fontFace:KFONT,fontSize:9,color:MUTED,margin:0});
+    s.addText(f[2],{x:x+0.1,y:6.02,w:cw-0.2,h:0.24,align:"center",fontFace:MONO,fontSize:10.5,bold:true,color:TEXT,margin:0});
+  });
+  s.addText("초록 칸 = 비트 1, 어두운 칸 = 비트 0. Test 9(비트 페이드)는 값을 쓰고 오래 두어 '지워지는지' 봅니다.",{x:M,y:6.55,w:W-2*M,h:0.35,fontFace:KFONT,fontSize:11.5,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("패턴→결함 매핑. 워킹=주소/배선, 0·1=고착, 8비트=미세고착, 난수=데이터민감, 비트페이드=보존, 난수반복=소프트. 원논문 Table I 근거.");
+})();
+
+// =====================================================================
 // Slide 8 — error path back to CPU (code + explanation)
 // =====================================================================
 (()=>{
