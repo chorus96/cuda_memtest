@@ -132,6 +132,44 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 3c — CUDA software stack (layered)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","CUDA 소프트웨어 스택(software stack)");
+  s.addText("내 코드는 여러 계층 위에서 동작합니다. cudaMalloc 한 줄이 아래로 내려가 GPU까지 도달합니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const layers=[
+    ["애플리케이션(Application)","cuda_memtest — main(), tests.cpp의 커널·테스트","GREEN","우리가 짜는 코드"],
+    ["CUDA 런타임 API(Runtime)","cudaMalloc · cudaMemcpy · cudaSetDevice · <<<>>>","TEAL","libcudart · CMake의 find_package(CUDAToolkit)이 링크"],
+    ["CUDA 드라이버 / GPU 드라이버","커널을 GPU에 제출 · 메모리·스케줄 관리","AMBER","libcuda · 커널 모드 드라이버"],
+    ["GPU 하드웨어(Hardware)","SM(스트리밍 멀티프로세서) · VRAM","MUTED","실제 연산·저장이 일어나는 곳"],
+  ];
+  const cmap={GREEN:GREEN,TEAL:TEAL,AMBER:AMBER,MUTED:MUTED};
+  const bx=M, bw=8.4, bh=1.02, gap=0.06; let y=2.1;
+  layers.forEach((L,i)=>{
+    const col=cmap[L[2]];
+    s.addShape(p.ShapeType.roundRect,{x:bx,y,w:bw,h:bh,rectRadius:0.06,fill:{color:CARD},line:{color:col,width:1.5}});
+    s.addText(L[0],{x:bx+0.3,y:y+0.14,w:bw-0.6,h:0.42,fontFace:KFONT,fontSize:16,bold:true,color:col,margin:0});
+    s.addText(L[1],{x:bx+0.3,y:y+0.56,w:bw-0.6,h:0.36,fontFace:MONO,fontSize:11.5,color:TEXT,margin:0});
+    // down chevron between layers
+    if(i<layers.length-1) s.addShape(p.ShapeType.line,{x:bx+bw/2,y:y+bh,w:0,h:gap+0.02,line:{color:MUTED,width:1.5,endArrowType:"triangle"}});
+    y+=bh+gap;
+  });
+  // side annotations
+  const ax=bx+bw+0.4; let ay=2.1;
+  layers.forEach(L=>{
+    s.addText(L[3],{x:ax,y:ay+0.1,w:W-M-ax,h:bh-0.2,valign:"middle",fontFace:KFONT,fontSize:12.5,color:MUTED,margin:0,lineSpacingMultiple:1.05});
+    ay+=bh+gap;
+  });
+  // direction arrow label
+  s.addText("cudaMalloc / <<<>>> 호출이\n이 방향으로 내려갑니다 ↓",{x:ax,y:6.35,w:W-M-ax,h:0.5,fontFace:KFONT,fontSize:11.5,italic:true,color:TEAL,margin:0,lineSpacingMultiple:1.05});
+
+  s.addText("세션 1~4에서 만나는 cudaMalloc·cudaMemcpy·<<<>>>는 모두 '런타임 API' 계층입니다.",{x:M,y:6.5,w:bw,h:0.4,fontFace:KFONT,fontSize:12.5,italic:true,color:MUTED,margin:0});
+  s.addNotes("SW 스택: 내 코드→런타임→드라이버→HW. CMake가 런타임(CUDAToolkit)을 링크. cudaMalloc 한 줄이 아래로 내려간다.");
+})();
+
+// =====================================================================
 // Slide 4 — what cuda_memtest solves (paper background)
 // =====================================================================
 (()=>{

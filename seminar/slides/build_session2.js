@@ -202,6 +202,43 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 6b — host<->device sequence diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"5","호스트↔디바이스 시퀀스(sequence)");
+  s.addText("move_inv_test가 CPU와 GPU 사이에서 시간순으로 주고받는 상호작용입니다.",{x:M,y:1.45,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const xh=3.0, xd=10.3, headY=1.95, headH=0.6;
+  // lifeline headers
+  s.addShape(p.ShapeType.roundRect,{x:xh-1.4,y:headY,w:2.8,h:headH,rectRadius:0.06,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("호스트(CPU)",{x:xh-1.4,y:headY,w:2.8,h:headH,align:"center",valign:"middle",fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:xd-1.4,y:headY,w:2.8,h:headH,rectRadius:0.06,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("디바이스(GPU)",{x:xd-1.4,y:headY,w:2.8,h:headH,align:"center",valign:"middle",fontFace:KFONT,fontSize:15,bold:true,color:GREEN,margin:0});
+  // lifelines (dashed vertical)
+  const llTop=headY+headH, llBot=6.35;
+  s.addShape(p.ShapeType.line,{x:xh,y:llTop,w:0,h:llBot-llTop,line:{color:LINE,width:1.5,dashType:"dash"}});
+  s.addShape(p.ShapeType.line,{x:xd,y:llTop,w:0,h:llBot-llTop,line:{color:LINE,width:1.5,dashType:"dash"}});
+
+  // messages
+  const msg=(y,dir,color,dashed,label)=>{
+    const opt={color,width:2.2}; if(dashed) opt.dashType="dash";
+    if(dir>0) opt.endArrowType="triangle"; else opt.beginArrowType="triangle";
+    s.addShape(p.ShapeType.line,{x:xh,y,w:xd-xh,h:0,line:opt});
+    s.addText(label,{x:xh+0.1,y:y-0.34,w:xd-xh-0.2,h:0.3,align:"center",valign:"middle",fontFace:KFONT,fontSize:12.5,bold:true,color:color,margin:0});
+  };
+  msg(2.95, 1, GREEN, false, "① write<<<>>> — 전체 메모리에 p1 기록");
+  msg(3.75, -1, TEAL, true, "커널 종료 = 메모리 반영(flush) — DeviceSynchronize");
+  msg(4.55, 1, GREEN, false, "② readwrite<<<>>> — p1 검사 후 p2 기록");
+  msg(5.35, -1, TEAL, true, "error_checking: cudaMemcpy(D→H) — 오류 정보 회수");
+  msg(6.15, 1, GREEN, false, "③ read<<<>>> — p2 다시 검사");
+
+  // note
+  s.addText("핵심: ①과 ② 사이의 '커널 종료(flush)'가 있어야 ②가 메모리에 반영된 값을 읽습니다.",{x:M,y:6.6,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:12.5,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("UML 시퀀스풍. 실선=호스트가 GPU에 커널 요청, 점선=GPU→호스트 반환(동기화/데이터). flush가 정확성의 열쇠.");
+})();
+
+// =====================================================================
 // Slide 7 — moving inversion algorithm (visual)
 // =====================================================================
 (()=>{
