@@ -13,8 +13,10 @@
 | [`커리큘럼.md`](커리큘럼.md) | 전체 시리즈(세션 0~5) 설계 · 학습목표 · 코드 지도 · 준비물 | ✅ 완성 |
 | [`세션1_실습랩.md`](세션1_실습랩.md) | 세션 1 hands-on 실습 가이드 (Ex 1~4) | ✅ 완성 |
 | [`slides/세션1_CUDA_스레드모델과_첫커널.pptx`](slides/) | 세션 1 슬라이드 덱 (13매) | ✅ 완성 |
-| `slides/build_session1.js` | 위 덱을 생성한 pptxgenjs 스크립트 (재생성용) | ✅ |
-| 세션 2~5 슬라이드·실습랩 | 세션 1과 동일한 템플릿으로 순차 제작 예정 | ⏳ 예정 |
+| [`세션2_실습랩.md`](세션2_실습랩.md) | 세션 2 hands-on 실습 가이드 (Ex 1~4) | ✅ 완성 |
+| [`slides/세션2_메모리모델과_데이터이동.pptx`](slides/) | 세션 2 슬라이드 덱 (12매) | ✅ 완성 |
+| `slides/build_session1.js`, `build_session2.js` | 위 덱을 생성한 pptxgenjs 스크립트 (재생성용) | ✅ |
+| 세션 3~5 슬라이드·실습랩 | 세션 1·2와 동일한 템플릿으로 순차 제작 예정 | ⏳ 예정 |
 
 ## 세션 로드맵
 
@@ -35,6 +37,7 @@
 cd slides
 npm install pptxgenjs      # 최초 1회
 node build_session1.js     # 세션1_CUDA_스레드모델과_첫커널.pptx 생성
+node build_session2.js     # 세션2_메모리모델과_데이터이동.pptx 생성
 ```
 
 > 슬라이드는 한글 폰트로 **맑은 고딕(Malgun Gothic)** 을, 코드에는 **Courier New** 를 사용합니다.
