@@ -81,6 +81,55 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 3b — SM / warp hardware block diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","실행 하드웨어 · SM과 워프(warp)");
+  s.addText("블록은 SM(스트리밍 멀티프로세서)에 배정되고, 스레드는 32개씩 워프(warp)로 묶여 함께 실행됩니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // GPU box with several SMs (left)
+  const gx=M, gy=2.0, gw=6.7, gh=4.3;
+  s.addShape(p.ShapeType.roundRect,{x:gx,y:gy,w:gw,h:gh,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("GPU · SM 수십 개",{x:gx+0.25,y:gy+0.14,w:gw-0.5,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  const smw=1.85, smh=1.5, sgx=0.24, sgy=0.28, sx0=gx+0.32, sy0=gy+0.7;
+  let n=0;
+  for(let r=0;r<2;r++){
+    for(let c=0;c<3;c++){
+      const x=sx0+c*(smw+sgx), y=sy0+r*(smh+sgy);
+      const hot=(r===0&&c===0);
+      s.addShape(p.ShapeType.roundRect,{x,y,w:smw,h:smh,rectRadius:0.05,fill:{color:CODEBG},line:{color:hot?TEAL:LINE,width:hot?2:1}});
+      s.addText("SM "+n,{x,y:y+0.14,w:smw,h:0.32,align:"center",fontFace:MONO,fontSize:12,bold:true,color:hot?TEAL:TEXT,margin:0});
+      s.addText("워프 스케줄러\n+ 코어 다수",{x,y:y+0.5,w:smw,h:0.85,align:"center",fontFace:KFONT,fontSize:10,color:MUTED,margin:0,lineSpacingMultiple:1.05});
+      n++;
+    }
+  }
+  // arrow to warp zoom
+  s.addShape(p.ShapeType.line,{x:gx+gw+0.03,y:gy+2.0,w:0.7,h:0,line:{color:TEAL,width:2.5,endArrowType:"triangle"}});
+  s.addText("확대",{x:gx+gw-0.05,y:gy+1.55,w:0.8,h:0.35,align:"center",fontFace:KFONT,fontSize:11,color:TEAL,margin:0});
+
+  // warp zoom box (right)
+  const zx=gx+gw+0.8, zy=2.0, zw=W-M-(gx+gw+0.8), zh=4.3;
+  s.addShape(p.ShapeType.roundRect,{x:zx,y:zy,w:zw,h:zh,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("워프(warp) = 32 스레드",{x:zx+0.25,y:zy+0.14,w:zw-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  s.addText("같은 명령을 동시에 실행 (lockstep)",{x:zx+0.25,y:zy+0.56,w:zw-0.5,h:0.32,fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  // 32 small thread squares (8x4)
+  const cols=8, rows=4, cw2=(zw-0.6-(cols-1)*0.1)/cols, ch2=0.42, cgx=0.1, cgy=0.14, cx0=zx+0.3, cy0=zy+1.05;
+  for(let i=0;i<32;i++){
+    const c=i%cols, r=Math.floor(i/cols);
+    const x=cx0+c*(cw2+cgx), y=cy0+r*(ch2+cgy);
+    s.addShape(p.ShapeType.roundRect,{x,y,w:cw2,h:ch2,rectRadius:0.03,fill:{color:CODEBG},line:{color:LINE,width:1}});
+  }
+  s.addText("32개 스레드가 한 덩어리로 움직임",{x:zx+0.3,y:cy0+rows*(ch2+cgy)+0.02,w:zw-0.6,h:0.32,fontFace:KFONT,fontSize:11.5,italic:true,color:MUTED,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:zx+0.3,y:zy+zh-0.95,w:zw-0.6,h:0.78,rectRadius:0.05,fill:{color:"1A2418"},line:{type:"none"}});
+  s.addText([
+    ln("그래서 blockDim은 32의 배수가 유리",AMBER,{bold:true,breakLine:true}),
+    ln("(실습 3에서 블록 크기별 대역폭 측정)",TEXT,{breakLine:true}),
+  ],{x:zx+0.45,y:zy+zh-0.85,w:zw-0.9,h:0.6,fontFace:KFONT,fontSize:11.5,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.05});
+  s.addNotes("SM에 블록 배정 → 워프(32스레드) 단위 실행. blockDim이 32 배수여야 스레드가 낭비 없이 채워짐. 코얼레싱과도 연결.");
+})();
+
+// =====================================================================
 // Slide 4 — thread self-indexing (code)
 // =====================================================================
 (()=>{

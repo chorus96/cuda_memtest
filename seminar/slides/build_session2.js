@@ -83,6 +83,44 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 3b — memory hierarchy block diagram (nested scopes)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","메모리 계층 구조 · 범위(scope)로 보기");
+  s.addText("메모리는 '누가 접근할 수 있는가(범위)'로 나뉩니다. 범위가 넓을수록 크지만 느립니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // nested boxes: Global > Shared > Register  (left ~8.4 wide)
+  const gx=M, gy=2.05, gw=8.0, gh=4.15;
+  s.addShape(p.ShapeType.roundRect,{x:gx,y:gy,w:gw,h:gh,rectRadius:0.07,fill:{color:"14201A"},line:{color:GREEN,width:1.5}});
+  s.addText("전역 메모리(Global)  ·  모든 스레드 접근  ·  크고 느림 (예: 4 GB)",{x:gx+0.25,y:gy+0.14,w:gw-0.5,h:0.4,fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  s.addText("← cuda_memtest가 검사하는 대상",{x:gx+0.25,y:gy+0.52,w:gw-0.5,h:0.32,fontFace:KFONT,fontSize:11.5,italic:true,color:GREEN,margin:0});
+
+  const sx=gx+0.4, sy=gy+0.95, sw=gw-0.8, sh=gh-1.35;
+  s.addShape(p.ShapeType.roundRect,{x:sx,y:sy,w:sw,h:sh,rectRadius:0.06,fill:{color:"12212A"},line:{color:TEAL,width:1.5}});
+  s.addText("공유 메모리(Shared)  ·  블록 내 스레드끼리 공유  ·  빠름",{x:sx+0.25,y:sy+0.14,w:sw-0.5,h:0.35,fontFace:KFONT,fontSize:13.5,bold:true,color:TEAL,margin:0});
+  s.addText("이 저장소는 거의 쓰지 않음 (개념만)",{x:sx+0.25,y:sy+0.5,w:sw-0.5,h:0.3,fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  const rx=sx+0.4, ry=sy+0.9, rw=sw-0.8, rh=sh-1.25;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:ry,w:rw,h:rh,rectRadius:0.05,fill:{color:CODEBG},line:{color:AMBER,width:1.5}});
+  s.addText("레지스터(Register)  ·  스레드 전용  ·  가장 빠름·가장 작음",{x:rx+0.25,y:ry+0.18,w:rw-0.5,h:0.4,fontFace:KFONT,fontSize:13.5,bold:true,color:AMBER,margin:0});
+  s.addText("커널 안의 지역 변수 (i, ptr 등)",{x:rx+0.25,y:ry+0.6,w:rw-0.5,h:0.4,fontFace:MONO,fontSize:12,color:TEXT,margin:0});
+
+  // Host memory box (right) + cudaMemcpy arrow
+  const mx=gx+gw+0.55, my=2.8, mw=W-M-(gx+gw+0.55), mh=2.6;
+  s.addShape(p.ShapeType.roundRect,{x:mx,y:my,w:mw,h:mh,rectRadius:0.07,fill:{color:CARD},line:{color:MUTED,width:1.5}});
+  s.addText("호스트 메모리",{x:mx+0.2,y:my+0.25,w:mw-0.4,h:0.4,align:"center",fontFace:KFONT,fontSize:15,bold:true,color:TEXT,margin:0});
+  s.addText("(CPU RAM)",{x:mx+0.2,y:my+0.68,w:mw-0.4,h:0.35,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  s.addText("GPU와 별개",{x:mx+0.2,y:my+1.15,w:mw-0.4,h:0.35,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  s.addText("cudaMemcpy로\n오류 정보를 여기로",{x:mx+0.2,y:my+1.6,w:mw-0.4,h:0.7,align:"center",fontFace:KFONT,fontSize:11.5,italic:true,color:TEAL,margin:0,lineSpacingMultiple:1.05});
+  // arrow between global(gx+gw) and host(mx)
+  s.addShape(p.ShapeType.line,{x:gx+gw+0.03,y:my+1.05,w:mx-(gx+gw)-0.06,h:0,line:{color:TEAL,width:2.5,beginArrowType:"triangle",endArrowType:"triangle"}});
+
+  s.addText("범위: 레지스터(스레드) ⊂ 공유(블록) ⊂ 전역(전체 GPU). 호스트 메모리는 GPU 밖 — cudaMemcpy로만 오갑니다.",{x:M,y:6.4,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("중첩 박스로 '범위'를 시각화. 안쪽=빠르고 작음/좁은 범위, 바깥=느리고 큼/넓은 범위. 전역이 검사 대상.");
+})();
+
+// =====================================================================
 // Slide 4 — three memory APIs (cards)
 // =====================================================================
 (()=>{

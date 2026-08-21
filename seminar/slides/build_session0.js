@@ -86,6 +86,52 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 3b — Host <-> Device hardware block diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"2","CUDA 하드웨어 구조 · 호스트와 디바이스");
+  s.addText("CPU(호스트)와 GPU(디바이스)는 별개의 메모리를 가지며, 데이터는 PCIe를 통해 오갑니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // Host box (left)
+  const hx=M, hy=2.1, hw=4.7, hh=4.05;
+  s.addShape(p.ShapeType.roundRect,{x:hx,y:hy,w:hw,h:hh,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("호스트(Host)",{x:hx+0.25,y:hy+0.15,w:hw-0.5,h:0.4,fontFace:KFONT,fontSize:16,bold:true,color:TEAL,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:hx+0.35,y:hy+0.75,w:hw-0.7,h:1.35,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+  s.addText("CPU",{x:hx+0.35,y:hy+0.95,w:hw-0.7,h:0.5,align:"center",fontFace:KFONT,fontSize:20,bold:true,color:TEXT,margin:0});
+  s.addText("강력한 코어 수 개~수십 개",{x:hx+0.35,y:hy+1.5,w:hw-0.7,h:0.5,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:hx+0.35,y:hy+2.3,w:hw-0.7,h:1.4,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+  s.addText("호스트 메모리 (RAM)",{x:hx+0.35,y:hy+2.55,w:hw-0.7,h:0.5,align:"center",fontFace:KFONT,fontSize:16,bold:true,color:TEXT,margin:0});
+  s.addText("시스템 메인 메모리",{x:hx+0.35,y:hy+3.1,w:hw-0.7,h:0.4,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+
+  // Device box (right)
+  const dx=W-M-4.7, dy=2.1, dw=4.7, dh=4.05;
+  s.addShape(p.ShapeType.roundRect,{x:dx,y:dy,w:dw,h:dh,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("디바이스(Device) · GPU",{x:dx+0.25,y:dy+0.15,w:dw-0.5,h:0.4,fontFace:KFONT,fontSize:16,bold:true,color:GREEN,margin:0});
+  // SM small boxes 4개
+  const smw=(dw-0.7-3*0.15)/4;
+  for(let i=0;i<4;i++){
+    const x=dx+0.35+i*(smw+0.15);
+    s.addShape(p.ShapeType.roundRect,{x,y:dy+0.75,w:smw,h:1.35,rectRadius:0.04,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText("SM",{x,y:dy+1.05,w:smw,h:0.4,align:"center",fontFace:MONO,fontSize:13,bold:true,color:GREEN,margin:0});
+    s.addText("코어\n다수",{x,y:dy+1.45,w:smw,h:0.55,align:"center",fontFace:KFONT,fontSize:9.5,color:MUTED,margin:0,lineSpacingMultiple:1.0});
+  }
+  s.addText("SM(스트리밍 멀티프로세서) 수십 개 · 코어 수천 개",{x:dx+0.35,y:dy+2.12,w:dw-0.7,h:0.3,align:"center",fontFace:KFONT,fontSize:10.5,italic:true,color:MUTED,margin:0});
+  s.addShape(p.ShapeType.roundRect,{x:dx+0.35,y:dy+2.55,w:dw-0.7,h:1.15,rectRadius:0.05,fill:{color:"1A2418"},line:{color:GREEN,width:1}});
+  s.addText("디바이스 메모리 (VRAM)",{x:dx+0.35,y:dy+2.72,w:dw-0.7,h:0.45,align:"center",fontFace:KFONT,fontSize:15,bold:true,color:TEXT,margin:0});
+  s.addText("cuda_memtest가 검사하는 대상 (예: 4 GB)",{x:dx+0.35,y:dy+3.15,w:dw-0.7,h:0.4,align:"center",fontFace:KFONT,fontSize:11.5,color:GREEN,margin:0});
+
+  // PCIe connector (double arrow) between host and device
+  const cx0=hx+hw+0.05, cx1=dx-0.05, cy=dy+1.55;
+  s.addShape(p.ShapeType.line,{x:cx0,y:cy,w:cx1-cx0,h:0,line:{color:AMBER,width:3,beginArrowType:"triangle",endArrowType:"triangle"}});
+  s.addText("PCIe",{x:cx0,y:cy-0.5,w:cx1-cx0,h:0.35,align:"center",fontFace:MONO,fontSize:13,bold:true,color:AMBER,margin:0});
+  s.addText("cudaMemcpy",{x:cx0-0.1,y:cy+0.15,w:cx1-cx0+0.2,h:0.35,align:"center",fontFace:MONO,fontSize:11,color:MUTED,margin:0});
+
+  s.addText("핵심: CPU는 GPU 메모리를 직접 못 읽습니다. 반드시 cudaMemcpy로 복사해야 합니다 (세션 2에서 자세히).",{x:M,y:6.35,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:13,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("호스트/디바이스가 분리된 메모리를 갖는다는 것이 CUDA의 근본 구조. PCIe를 통한 cudaMemcpy가 다리 역할.");
+})();
+
+// =====================================================================
 // Slide 4 — what cuda_memtest solves (paper background)
 // =====================================================================
 (()=>{
