@@ -237,6 +237,50 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 5c — shared-memory bank conflict diagram (advanced)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"4","공유 메모리 뱅크 충돌(bank conflict)");
+  s.addText([
+    ln("심화 참고 — ",AMBER,{bold:true,breakLine:false}),
+    ln("공유 메모리(shared) 접근 패턴 이야기입니다. 이 저장소는 공유 메모리를 거의 쓰지 않지만, 코얼레싱과 짝을 이루는 개념이라 소개합니다.",MUTED,{breakLine:true}),
+  ],{x:M,y:1.5,w:W-2*M,h:0.6,fontFace:KFONT,fontSize:13.5,color:TEXT,margin:0,valign:"top"});
+  s.addText("공유 메모리는 32개 뱅크(bank)로 나뉩니다. 한 워프가 같은 뱅크의 서로 다른 주소에 접근하면 순차화됩니다.",{x:M,y:2.15,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:14,color:MUTED,margin:0});
+
+  const drawBanks=(y,label,color,mapping,note)=>{
+    s.addText(label,{x:M,y:y+0.05,w:2.4,h:0.55,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:color,margin:0});
+    const bx=M+2.7, cw=0.6, gap=0.1, n=8;
+    for(let i=0;i<n;i++){
+      s.addShape(p.ShapeType.roundRect,{x:bx+i*(cw+gap),y,w:cw,h:0.62,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+      s.addText("B"+i,{x:bx+i*(cw+gap),y:y+0.04,w:cw,h:0.28,align:"center",fontFace:KFONT,fontSize:9,color:MUTED,margin:0});
+    }
+    // thread labels mapped to banks
+    mapping.forEach(m=>{
+      const x=bx+m.bank*(cw+gap);
+      s.addText(m.t,{x,y:y+0.3,w:cw,h:0.3,align:"center",valign:"middle",fontFace:MONO,fontSize:10,bold:true,color:m.conflict?RED:color,margin:0});
+    });
+    const nx=bx+n*(cw+gap)+0.1;
+    if(note) s.addText(note,{x:nx,y:y+0.05,w:W-M-nx,h:0.55,valign:"middle",fontFace:KFONT,fontSize:11.5,color:color,margin:0});
+  };
+  // no conflict: T0..T7 -> bank 0..7
+  const noc=[0,1,2,3,4,5,6,7].map(i=>({t:"T"+i,bank:i,conflict:false}));
+  drawBanks(2.7,"충돌 없음",GREEN,noc,"각 스레드가 다른 뱅크 → 1회에 처리");
+  // conflict: T0,T1 -> bank0 ; T2,T3 -> bank1 ...
+  const conf=[{t:"T0",bank:0,conflict:true},{t:"T2",bank:2,conflict:true},{t:"T4",bank:4,conflict:true},{t:"T6",bank:6,conflict:true}];
+  // put two threads on same bank by stacking label — simulate by marking banks 0 with T0/T1
+  drawBanks(3.75,"2-way 충돌",RED,[{t:"T0·T1",bank:0,conflict:true},{t:"T2·T3",bank:2,conflict:true},{t:"T4·T5",bank:4,conflict:true},{t:"T6·T7",bank:6,conflict:true}],"둘씩 같은 뱅크 → 2회로 순차화");
+
+  s.addShape(p.ShapeType.roundRect,{x:M,y:4.9,w:W-2*M,h:1.35,rectRadius:0.08,fill:{color:CARD},line:{type:"none"}});
+  s.addText([
+    ln("핵심: 워프의 스레드들이 서로 다른 뱅크에 접근하면 한 번에, 같은 뱅크의 다른 주소면 충돌 수만큼 순차 처리됩니다.",TEXT,{breakLine:true,paraSpaceAfter:6}),
+    ln("코얼레싱(전역 메모리) · 뱅크 충돌(공유 메모리) · 다이버전스(분기) — 워프 단위 성능의 3대 주제입니다.",GREEN,{breakLine:true}),
+  ],{x:M+0.3,y:5.05,w:W-2*M-0.6,h:1.1,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.15});
+  s.addText("cuda_memtest는 공유 메모리를 쓰지 않으므로 실제로는 해당 없음 — 향후 공유 메모리 최적화 학습을 위한 참고입니다.",{x:M,y:6.4,w:W-2*M,h:0.4,fontFace:KFONT,fontSize:12.5,italic:true,color:MUTED,align:"center",margin:0});
+  s.addNotes("심화/선택 슬라이드. 공유 메모리 32뱅크, 같은 뱅크 다른 주소 접근 시 충돌. 이 저장소엔 없지만 성능 3종 세트 완성용.");
+})();
+
+// =====================================================================
 // Slide 6 — timing with CUDA events (code + why)
 // =====================================================================
 (()=>{
@@ -313,6 +357,43 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
   s.addText("왜 이벤트도 스트림에?",{x:M+colW+0.65,y:4.7,w:colW-0.5,h:0.5,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
   s.addText("이벤트를 같은 스트림에 기록해야 그 스트림의 커널들 시간을 정확히 잽니다.",{x:M+colW+0.65,y:5.2,w:colW-0.5,h:0.9,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"top",lineSpacingMultiple:1.15});
   s.addNotes("스트림은 심화 주제라 개념만. 여러 스트림으로 겹쳐 실행(overlap)하는 건 향후 주제로 남깁니다.");
+})();
+
+// =====================================================================
+// Slide 7b — stream overlap (conceptual Gantt)
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"7","스트림 겹침(overlap) · 개념도");
+  s.addText("여러 스트림을 쓰면 한 스트림의 복사와 다른 스트림의 연산을 겹쳐 전체 시간을 줄일 수 있습니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  const u=0.82, x0=M+2.7, laneH=0.55;
+  const seg=(x0u,y,wu,color,label)=>{
+    s.addShape(p.ShapeType.roundRect,{x:x0+x0u*u,y,w:wu*u-0.04,h:laneH,rectRadius:0.04,fill:{color},line:{type:"none"}});
+    s.addText(label,{x:x0+x0u*u,y,w:wu*u-0.04,h:laneH,align:"center",valign:"middle",fontFace:KFONT,fontSize:11,bold:true,color:BG,margin:0});
+  };
+  // ① single stream (2 chunks sequential)
+  s.addText("① 단일 스트림",{x:M,y:2.35,w:2.5,h:0.55,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:TEAL,margin:0});
+  s.addText("(청크 2개 순차)",{x:M,y:2.78,w:2.5,h:0.4,valign:"middle",fontFace:KFONT,fontSize:11,color:MUTED,margin:0});
+  seg(0,2.3,1,TEAL,"복사"); seg(1,2.3,2,GREEN,"커널"); seg(3,2.3,1,TEAL,"복사");
+  seg(4,2.3,1,TEAL,"복사"); seg(5,2.3,2,GREEN,"커널"); seg(7,2.3,1,TEAL,"복사");
+  // ② two streams overlapped
+  s.addText("② 2 스트림",{x:M,y:3.75,w:2.5,h:0.5,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:GREEN,margin:0});
+  s.addText("(겹침 overlap)",{x:M,y:4.15,w:2.5,h:0.4,valign:"middle",fontFace:KFONT,fontSize:11,color:MUTED,margin:0});
+  seg(0,3.9,1,TEAL,"복사"); seg(1,3.9,2,GREEN,"커널"); seg(3,3.9,1,TEAL,"복사");
+  seg(1,4.55,1,TEAL,"복사"); seg(3,4.55,2,GREEN,"커널"); seg(5,4.55,1,TEAL,"복사");
+  // savings bracket 6u..8u
+  s.addShape(p.ShapeType.line,{x:x0+6*u,y:5.3,w:2*u,h:0,line:{color:AMBER,width:2,beginArrowType:"triangle",endArrowType:"triangle"}});
+  s.addText("절약된 시간",{x:x0+6*u-0.4,y:5.35,w:2*u+0.8,h:0.35,align:"center",fontFace:KFONT,fontSize:11,bold:true,color:AMBER,margin:0});
+  // time axis hint
+  s.addText("→ 시간",{x:x0+8*u+0.1,y:2.3,w:1.2,h:0.4,valign:"middle",fontFace:KFONT,fontSize:11,italic:true,color:MUTED,margin:0});
+
+  s.addShape(p.ShapeType.roundRect,{x:M,y:5.85,w:W-2*M,h:1.1,rectRadius:0.08,fill:{color:CARD},line:{type:"none"}});
+  s.addText([
+    ln("이 저장소: ",AMBER,{bold:true,breakLine:false}),
+    ln("test10은 데이터가 이미 GPU에 있어 복사(H2D/D2H)가 없습니다 → 단일 스트림으로 충분합니다. 겹침은 복사와 연산이 섞이는 워크로드에서 빛을 봅니다.",TEXT,{breakLine:true}),
+  ],{x:M+0.3,y:6.05,w:W-2*M-0.6,h:0.8,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"middle",lineSpacingMultiple:1.15});
+  s.addNotes("개념도. 복사엔진과 연산엔진이 별개라 겹침이 가능. test10은 복사가 없어 단일 스트림으로 충분하다는 점을 정직하게 전달.");
 })();
 
 // =====================================================================

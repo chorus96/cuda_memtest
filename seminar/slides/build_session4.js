@@ -216,6 +216,62 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
 })();
 
 // =====================================================================
+// Slide 6b — atomicAdd vs tree reduction diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"5","집계하는 두 방법 · atomicAdd vs 리덕션");
+  s.addText("여러 스레드의 값을 하나로 모으는 방법은 둘입니다. 이 저장소는 왼쪽(atomicAdd)을 씁니다.",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+  const colW=(W-2*M-0.4)/2, boxY=2.05, boxH=3.6;
+  // connector helper: always positive extents, flipH for right-to-left downward segments
+  const connect=(ax,ay,bx,by)=>{
+    s.addShape(p.ShapeType.line,{x:Math.min(ax,bx),y:Math.min(ay,by),w:Math.abs(bx-ax),h:Math.abs(by-ay),flipH:(ax>bx),line:{color:MUTED,width:1.3}});
+  };
+
+  // LEFT: atomicAdd (star)
+  const lx=M;
+  s.addShape(p.ShapeType.roundRect,{x:lx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:GREEN,width:1.5}});
+  s.addText("① atomicAdd  (이 저장소 방식)",{x:lx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:GREEN,margin:0});
+  const tY=boxY+0.8, cY=boxY+2.35;
+  for(let i=0;i<4;i++){
+    const x=lx+0.55+i*1.25;
+    s.addShape(p.ShapeType.roundRect,{x,y:tY,w:0.95,h:0.5,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText("T"+i,{x,y:tY,w:0.95,h:0.5,align:"center",valign:"middle",fontFace:MONO,fontSize:12,bold:true,color:TEXT,margin:0});
+    connect(x+0.475, tY+0.5, lx+colW/2, cY);
+  }
+  s.addShape(p.ShapeType.roundRect,{x:lx+colW/2-1.0,y:cY,w:2.0,h:0.6,rectRadius:0.05,fill:{color:"16240F"},line:{color:GREEN,width:1.5}});
+  s.addText("err_count",{x:lx+colW/2-1.0,y:cY,w:2.0,h:0.6,align:"center",valign:"middle",fontFace:MONO,fontSize:13,bold:true,color:GREEN,margin:0});
+  s.addText("모두가 하나에 원자적 +1 · 간단하지만 경합(contention)",{x:lx+0.25,y:boxY+boxH-0.5,w:colW-0.5,h:0.4,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+
+  // RIGHT: tree reduction
+  const rx=M+colW+0.4;
+  s.addShape(p.ShapeType.roundRect,{x:rx,y:boxY,w:colW,h:boxH,rectRadius:0.07,fill:{color:CARD},line:{color:TEAL,width:1.5}});
+  s.addText("② 트리 리덕션(tree reduction)",{x:rx+0.25,y:boxY+0.15,w:colW-0.5,h:0.4,fontFace:KFONT,fontSize:15,bold:true,color:TEAL,margin:0});
+  const l0Y=boxY+0.8, l1Y=boxY+1.55, l2Y=boxY+2.3;
+  const l0x=[]; for(let i=0;i<4;i++){ const x=rx+0.55+i*1.25; l0x.push(x+0.475);
+    s.addShape(p.ShapeType.roundRect,{x,y:l0Y,w:0.95,h:0.45,rectRadius:0.05,fill:{color:CODEBG},line:{color:LINE,width:1}});
+    s.addText("v"+i,{x,y:l0Y,w:0.95,h:0.45,align:"center",valign:"middle",fontFace:MONO,fontSize:11,bold:true,color:TEXT,margin:0}); }
+  const l1cx=[]; for(let j=0;j<2;j++){ const cx=(l0x[j*2]+l0x[j*2+1])/2; l1cx.push(cx);
+    s.addShape(p.ShapeType.roundRect,{x:cx-0.6,y:l1Y,w:1.2,h:0.45,rectRadius:0.05,fill:{color:"12212A"},line:{color:TEAL,width:1}});
+    s.addText(j===0?"v0+v1":"v2+v3",{x:cx-0.6,y:l1Y,w:1.2,h:0.45,align:"center",valign:"middle",fontFace:MONO,fontSize:10.5,bold:true,color:TEAL,margin:0});
+    connect(l0x[j*2], l0Y+0.45, cx, l1Y);
+    connect(l0x[j*2+1], l0Y+0.45, cx, l1Y); }
+  const l2cx=(l1cx[0]+l1cx[1])/2;
+  s.addShape(p.ShapeType.roundRect,{x:l2cx-0.7,y:l2Y,w:1.4,h:0.5,rectRadius:0.05,fill:{color:"12212A"},line:{color:TEAL,width:1.5}});
+  s.addText("합계",{x:l2cx-0.7,y:l2Y,w:1.4,h:0.5,align:"center",valign:"middle",fontFace:KFONT,fontSize:12,bold:true,color:TEAL,margin:0});
+  connect(l1cx[0], l1Y+0.45, l2cx, l2Y);
+  connect(l1cx[1], l1Y+0.45, l2cx, l2Y);
+  s.addText("쌍으로 합쳐 절반씩 · log2(n) 단계 · 경합 없음",{x:rx+0.25,y:boxY+boxH-0.5,w:colW-0.5,h:0.4,align:"center",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+
+  s.addShape(p.ShapeType.roundRect,{x:M,y:5.85,w:W-2*M,h:1.05,rectRadius:0.08,fill:{color:"1A2418"},line:{type:"none"}});
+  s.addText([
+    ln("언제 무엇을? ",AMBER,{bold:true,breakLine:false}),
+    ln("cuda_memtest는 오류가 보통 드물어 atomicAdd로 충분·간단합니다. 반대로 대량의 값을 합·최대·평균 낼 때는 경합 없는 트리 리덕션이 훨씬 빠릅니다.",TEXT,{breakLine:true}),
+  ],{x:M+0.3,y:6.02,w:W-2*M-0.6,h:0.75,fontFace:KFONT,fontSize:14,color:TEXT,margin:0,valign:"middle",lineSpacingMultiple:1.15});
+  s.addNotes("이 저장소가 쓰는 atomicAdd와 대안인 트리 리덕션 대조. 오류가 드물면 atomic, 대량 집계면 reduction.");
+})();
+
+// =====================================================================
 // Slide 7 — async errors (the trap)
 // =====================================================================
 (()=>{
