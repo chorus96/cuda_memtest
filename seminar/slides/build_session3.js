@@ -4,7 +4,7 @@ p.layout = "LAYOUT_WIDE"; // 13.3 x 7.5
 
 // ---- palette (shared with Sessions 1-2) ----
 const BG="13161C", CARD="1E232C", CODEBG="0E1116", TEXT="E8EDF2", MUTED="9AA6B2";
-const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", LINE="2C3440";
+const GREEN="8CC63F", TEAL="4FB0C6", AMBER="E0A458", RED="E0645B", LINE="2C3440";
 const KFONT="Malgun Gothic", MONO="Courier New";
 const W=13.3, H=7.5, M=0.6;
 
@@ -189,6 +189,51 @@ function ln(text,color,opts){ return {text,options:Object.assign({color:color||T
     ln("실습 4에서 직접 깨뜨려 측정합니다",TEXT,{breakLine:true,bullet:{code:"2022"}}),
   ],{x:M+colW+0.4,y:5.15,w:colW,h:1.2,fontFace:KFONT,fontSize:15.5,color:TEXT,margin:0,valign:"top"});
   s.addNotes("병합은 CUDA 성능 최적화의 1순위. T0~T3이 어느 칸을 가리키는지 눈으로 비교시키세요.");
+})();
+
+// =====================================================================
+// Slide 5b — warp divergence diagram
+// =====================================================================
+(()=>{
+  const s=p.addSlide(); bg(s);
+  header(s,"4","워프 다이버전스(warp divergence)");
+  s.addText("한 워프(32 스레드)가 if/else로 갈리면, GPU는 두 경로를 순차로 실행합니다 (동시에 못 함).",{x:M,y:1.5,w:W-2*M,h:0.45,fontFace:KFONT,fontSize:15,color:MUTED,margin:0});
+
+  // code line
+  codePanel(s,M,2.0,W-2*M,0.7,[
+    ln("if (cond) { A; } else { B; }   // 워프 안에서 cond가 스레드마다 다르면?",TEXT),
+  ],{fontSize:13});
+
+  // warp row: 8 threads, mixed true/false
+  const pat=[1,0,1,1,0,1,0,0]; // 1=true(A), 0=false(B)
+  const drawWarp=(y,label,activeVal,note)=>{
+    s.addText(label,{x:M,y:y+0.05,w:3.0,h:0.5,valign:"middle",fontFace:KFONT,fontSize:14,bold:true,color:TEXT,margin:0});
+    const bx=M+3.1, cw=0.62;
+    for(let i=0;i<8;i++){
+      const on = activeVal===null ? true : (pat[i]===activeVal);
+      const c = pat[i]===1?GREEN:AMBER;
+      s.addShape(p.ShapeType.roundRect,{x:bx+i*(cw+0.12),y,w:cw,h:0.6,rectRadius:0.05,fill:{color:on?c:CODEBG},line:{color:on?c:LINE,width:1}});
+      s.addText(pat[i]===1?"A":"B",{x:bx+i*(cw+0.12),y,w:cw,h:0.6,align:"center",valign:"middle",fontFace:MONO,fontSize:14,bold:true,color:on?BG:MUTED,margin:0});
+    }
+    if(note) s.addText(note,{x:bx+8*(cw+0.12)+0.15,y:y+0.05,w:3.4,h:0.5,valign:"middle",fontFace:KFONT,fontSize:12,color:MUTED,margin:0});
+  };
+  s.addText("워프의 스레드 (A=if경로, B=else경로)",{x:M,y:2.95,w:W-2*M,h:0.3,fontFace:KFONT,fontSize:12,italic:true,color:MUTED,margin:0});
+  drawWarp(3.3,"1단계: if(A) 실행",1,"← A 스레드만 활성, B는 대기");
+  drawWarp(4.15,"2단계: else(B) 실행",0,"← B 스레드만 활성, A는 대기");
+
+  // consequence + guidance boxes
+  const colW=(W-2*M-0.4)/2;
+  s.addShape(p.ShapeType.roundRect,{x:M,y:5.15,w:colW,h:1.15,rectRadius:0.08,fill:{color:"2A1618"},line:{color:RED,width:1}});
+  s.addText([
+    ln("결과: 두 경로를 순차 실행 → 최대 2배 느림",RED,{bold:true,breakLine:true,paraSpaceAfter:4}),
+    ln("대기하는 스레드는 그 시간에 아무 일도 못 함",TEXT,{breakLine:true}),
+  ],{x:M+0.25,y:5.32,w:colW-0.5,h:0.85,fontFace:KFONT,fontSize:13,color:TEXT,margin:0,valign:"top"});
+  s.addShape(p.ShapeType.roundRect,{x:M+colW+0.4,y:5.15,w:colW,h:1.15,rectRadius:0.08,fill:{color:"16240F"},line:{color:GREEN,width:1}});
+  s.addText([
+    ln("피하는 법: 워프 내 스레드가 같은 경로를 타게",GREEN,{bold:true,breakLine:true,paraSpaceAfter:4}),
+    ln("이 저장소의 커널은 if(ptr>=end_ptr) return; 정도라 분기가 거의 균일 → 다이버전스 최소",TEXT,{breakLine:true}),
+  ],{x:M+colW+0.65,y:5.32,w:colW-0.5,h:0.85,fontFace:KFONT,fontSize:12.5,color:TEXT,margin:0,valign:"top"});
+  s.addNotes("한 워프 안에서 분기가 갈리면 GPU가 두 경로를 직렬 실행(마스킹). 데이터로 나눈 분기, 균일한 조건이 유리.");
 })();
 
 // =====================================================================
